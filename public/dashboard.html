@@ -1,0 +1,923 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>SalinKuwenta Dashboard - Resident</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Manrope:wght@400;500;700;800&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css">
+    <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        :root {
+            --primary: #0A400C;
+            --secondary: #819067;
+            --accent: #B1AB86;
+            --background: #FEFAE0;
+            --danger: #c33;
+            --success: #3c3;
+            --warning: #f90;
+        }
+
+        body {
+            font-family: 'Manrope', sans-serif;
+            background-color: var(--background);
+            min-height: 100vh;
+        }
+
+        .navbar {
+            background: white;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+            padding: 1rem 2rem;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            position: sticky;
+            top: 0;
+            z-index: 100;
+        }
+
+        .navbar-brand {
+            font-size: 1.5rem;
+            font-weight: 800;
+            color: var(--primary);
+        }
+
+        .navbar-user {
+            display: flex;
+            align-items: center;
+            gap: 1rem;
+        }
+
+        .notification-badge {
+            position: relative;
+            cursor: pointer;
+            font-size: 1.5rem;
+        }
+
+        .notification-count {
+            position: absolute;
+            top: -8px;
+            right: -8px;
+            background: var(--danger);
+            color: white;
+            border-radius: 50%;
+            width: 20px;
+            height: 20px;
+            font-size: 0.75rem;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-weight: 700;
+        }
+
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 2rem;
+        }
+
+        .dashboard-header {
+            text-align: center;
+            margin-bottom: 2rem;
+        }
+
+        .dashboard-title {
+            font-size: 2rem;
+            font-weight: 800;
+            color: var(--primary);
+            margin-bottom: 0.5rem;
+        }
+
+        .role-badge {
+            display: inline-block;
+            padding: 0.5rem 1rem;
+            background: var(--secondary);
+            color: white;
+            border-radius: 20px;
+            font-size: 0.875rem;
+            font-weight: 600;
+            text-transform: capitalize;
+        }
+
+        .stats-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+            gap: 1.5rem;
+            margin-bottom: 2rem;
+        }
+
+        .stat-card {
+            background: white;
+            padding: 1.5rem;
+            border-radius: 15px;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+        }
+
+        .stat-label {
+            font-size: 0.875rem;
+            color: var(--secondary);
+            margin-bottom: 0.5rem;
+        }
+
+        .stat-value {
+            font-size: 2rem;
+            font-weight: 800;
+            color: var(--primary);
+        }
+
+        .stat-subtitle {
+            font-size: 0.75rem;
+            color: var(--accent);
+            margin-top: 0.25rem;
+        }
+
+        .section {
+            background: white;
+            padding: 2rem;
+            border-radius: 15px;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+            margin-bottom: 2rem;
+        }
+
+        .section-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 1.5rem;
+        }
+
+        .section-title {
+            font-size: 1.5rem;
+            font-weight: 700;
+            color: var(--primary);
+        }
+
+        .btn {
+            padding: 0.75rem 1.5rem;
+            border: none;
+            border-radius: 8px;
+            font-family: 'Manrope', sans-serif;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.2s;
+        }
+
+        .btn-primary {
+            background: var(--primary);
+            color: white;
+        }
+
+        .btn-primary:hover {
+            background: #0a5010;
+        }
+
+        .btn-secondary {
+            background: var(--secondary);
+            color: white;
+        }
+
+        .btn-danger {
+            background: var(--danger);
+            color: white;
+        }
+
+        .btn-success {
+            background: var(--success);
+            color: white;
+        }
+
+        form {
+            display: grid;
+            gap: 1rem;
+        }
+
+        .form-group {
+            display: flex;
+            flex-direction: column;
+            gap: 0.5rem;
+        }
+
+        .form-row {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 1rem;
+        }
+
+        label {
+            font-size: 0.875rem;
+            font-weight: 600;
+            color: var(--secondary);
+        }
+
+        input, select, textarea {
+            padding: 0.75rem;
+            border: 2px solid rgba(177, 171, 134, 0.3);
+            border-radius: 8px;
+            font-family: 'Manrope', sans-serif;
+            font-size: 1rem;
+        }
+
+        input:focus, select:focus, textarea:focus {
+            outline: none;
+            border-color: var(--primary);
+        }
+
+        textarea {
+            resize: vertical;
+            min-height: 100px;
+        }
+
+        .table {
+            width: 100%;
+            border-collapse: collapse;
+        }
+
+        .table th {
+            background: var(--background);
+            padding: 1rem;
+            text-align: left;
+            font-weight: 600;
+            color: var(--primary);
+        }
+
+        .table td {
+            padding: 1rem;
+            border-bottom: 1px solid rgba(177, 171, 134, 0.2);
+        }
+
+        .table tr:hover {
+            background: var(--background);
+        }
+
+        .status-badge {
+            display: inline-block;
+            padding: 0.25rem 0.75rem;
+            border-radius: 12px;
+            font-size: 0.75rem;
+            font-weight: 600;
+            text-transform: uppercase;
+        }
+
+        .status-pending { background: #fff3cd; color: #856404; }
+        .status-approved { background: #d4edda; color: #155724; }
+        .status-ongoing { background: #cce5ff; color: #004085; }
+        .status-completed { background: #d4edda; color: #155724; }
+        .status-resolved { background: #d4edda; color: #155724; }
+        .status-rejected { background: #f8d7da; color: #721c24; }
+
+        .priority-badge {
+            display: inline-block;
+            padding: 0.25rem 0.75rem;
+            border-radius: 12px;
+            font-size: 0.75rem;
+            font-weight: 600;
+        }
+
+        .priority-low { background: #e0e0e0; color: #666; }
+        .priority-medium { background: #fff3cd; color: #856404; }
+        .priority-high { background: #f8d7da; color: #721c24; }
+        .priority-urgent { background: #dc3545; color: white; }
+
+        #map {
+            height: 400px;
+            border-radius: 10px;
+            margin-top: 1rem;
+        }
+
+        .chart-container {
+            position: relative;
+            height: 300px;
+            margin-top: 1rem;
+        }
+
+        .modal {
+            display: none;
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0,0,0,0.5);
+            z-index: 1000;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .modal.show {
+            display: flex;
+        }
+
+        .modal-content {
+            background: white;
+            padding: 2rem;
+            border-radius: 15px;
+            max-width: 600px;
+            width: 90%;
+            max-height: 90vh;
+            overflow-y: auto;
+        }
+
+        .modal-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 1.5rem;
+        }
+
+        .modal-close {
+            font-size: 1.5rem;
+            cursor: pointer;
+            color: var(--secondary);
+        }
+
+        .notification-panel {
+            position: fixed;
+            right: -400px;
+            top: 70px;
+            width: 400px;
+            height: calc(100vh - 70px);
+            background: white;
+            box-shadow: -2px 0 10px rgba(0,0,0,0.1);
+            transition: right 0.3s;
+            z-index: 99;
+            overflow-y: auto;
+        }
+
+        .notification-panel.show {
+            right: 0;
+        }
+
+        .notification-item {
+            padding: 1rem;
+            border-bottom: 1px solid rgba(177, 171, 134, 0.2);
+            cursor: pointer;
+        }
+
+        .notification-item:hover {
+            background: var(--background);
+        }
+
+        .notification-item.unread {
+            background: #f0f8ff;
+        }
+
+        .notification-title {
+            font-weight: 600;
+            color: var(--primary);
+            margin-bottom: 0.25rem;
+        }
+
+        .notification-message {
+            font-size: 0.875rem;
+            color: var(--secondary);
+        }
+
+        .notification-time {
+            font-size: 0.75rem;
+            color: var(--accent);
+            margin-top: 0.25rem;
+        }
+
+        .progress-bar {
+            width: 100%;
+            height: 20px;
+            background: #e0e0e0;
+            border-radius: 10px;
+            overflow: hidden;
+            margin-top: 0.5rem;
+        }
+
+        .progress-fill {
+            height: 100%;
+            background: linear-gradient(90deg, var(--secondary), var(--primary));
+            transition: width 0.3s;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: white;
+            font-size: 0.75rem;
+            font-weight: 600;
+        }
+
+        .tabs {
+            display: flex;
+            gap: 1rem;
+            margin-bottom: 1.5rem;
+            border-bottom: 2px solid rgba(177, 171, 134, 0.2);
+        }
+
+        .tab {
+            padding: 0.75rem 1.5rem;
+            cursor: pointer;
+            font-weight: 600;
+            color: var(--secondary);
+            border-bottom: 3px solid transparent;
+            transition: all 0.2s;
+        }
+
+        .tab.active {
+            color: var(--primary);
+            border-bottom-color: var(--primary);
+        }
+
+        .tab-content {
+            display: none;
+        }
+
+        .tab-content.active {
+            display: block;
+        }
+
+        .empty-state {
+            text-align: center;
+            padding: 3rem;
+            color: var(--secondary);
+        }
+
+        .empty-state-icon {
+            font-size: 3rem;
+            margin-bottom: 1rem;
+        }
+
+        .info-text {
+            font-size: 0.875rem;
+            color: var(--secondary);
+            text-align: center;
+            margin-top: 0.5rem;
+        }
+
+        .geolocation-btn {
+            background: var(--success);
+            color: white;
+            padding: 0.5rem 1rem;
+            border: none;
+            border-radius: 0.5rem;
+            cursor: pointer;
+            font-size: 0.875rem;
+            margin-left: 1rem;
+        }
+
+        .geolocation-btn:hover {
+            background: #2e7d32;
+        }
+
+        .geolocation-btn:disabled {
+            background: #ccc;
+            cursor: not-allowed;
+        }
+
+        .loading {
+            opacity: 0.7;
+            pointer-events: none;
+        }
+
+        @media (max-width: 768px) {
+            .container {
+                padding: 1rem;
+            }
+
+            .stats-grid {
+                grid-template-columns: 1fr;
+            }
+
+            .form-row {
+                grid-template-columns: 1fr;
+            }
+
+            .notification-panel {
+                width: 100%;
+                right: -100%;
+            }
+
+            .table {
+                font-size: 0.875rem;
+            }
+        }
+    </style>
+</head>
+<body>
+    <nav class="navbar">
+        <div class="navbar-brand">SalinKuwenta</div>
+        <div class="navbar-user">
+            <div class="notification-badge" onclick="toggleNotifications()">
+                🔔
+                <span class="notification-count" id="notificationCount">0</span>
+            </div>
+            <button class="btn btn-danger" onclick="logout()">Logout</button>
+        </div>
+    </nav>
+
+    <div class="notification-panel" id="notificationPanel">
+        <div style="padding: 1rem; border-bottom: 2px solid rgba(177, 171, 134, 0.2);">
+            <h3>Notifications</h3>
+        </div>
+        <div id="notificationList"></div>
+    </div>
+
+    <div class="container">
+        <div class="dashboard-header">
+            <h1 class="dashboard-title">Welcome, <span id="userName"></span></h1>
+            <span class="role-badge" id="userRole"></span>
+        </div>
+
+        <div class="stats-grid" id="statsGrid"></div>
+
+        <div id="dynamicContent"></div>
+    </div>
+
+    <div class="modal" id="modal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h2 id="modalTitle"></h2>
+                <span class="modal-close" onclick="closeModal()">&times;</span>
+            </div>
+            <div id="modalBody"></div>
+        </div>
+    </div>
+
+    <script>
+        let citizenId, role, userData, map, userLocationMarker;
+        const API_BASE = 'http://localhost:3000/api';
+        const BARANGAY_HALL = { title: 'Agujo Barangay Hall', location: '11.268491, 124.008476' };
+
+        // Extract citizenId from path (for residents)
+        const pathParts = window.location.pathname.split('/');
+        citizenId = pathParts[1];
+        role = localStorage.getItem('role') || 'resident';
+
+        if (!citizenId || role !== 'resident') {
+            window.location.href = '/';
+        }
+
+        // Initialize
+        async function init() {
+            await loadProfile();
+            await loadNotifications();
+            await loadAnalytics();
+            await loadDynamicContent();
+            
+            // Auto-refresh notifications every 30 seconds
+            setInterval(loadNotifications, 30000);
+        }
+
+        async function loadProfile() {
+            try {
+                const response = await fetch(`${API_BASE}/user/${citizenId}`);
+                const data = await response.json();
+                if (response.ok) {
+                    userData = data;
+                    role = data.role;
+                    document.getElementById('userName').textContent = data.name;
+                    document.getElementById('userRole').textContent = data.role.replace('_', ' ');
+                    localStorage.setItem('role', data.role);
+                } else {
+                    alert('Failed to load profile');
+                    window.location.href = '/';
+                }
+            } catch (error) {
+                console.error('Profile error:', error);
+            }
+        }
+
+        async function loadNotifications() {
+            try {
+                const response = await fetch(`${API_BASE}/notifications/${citizenId}`);
+                const notifications = await response.json();
+                
+                const unread = notifications.filter(n => !n.isRead);
+                document.getElementById('notificationCount').textContent = unread.length;
+                document.getElementById('notificationCount').style.display = unread.length > 0 ? 'flex' : 'none';
+                
+                const list = document.getElementById('notificationList');
+                if (notifications.length === 0) {
+                    list.innerHTML = '<div class="empty-state"><div class="empty-state-icon">📭</div><p>No notifications</p></div>';
+                } else {
+                    list.innerHTML = notifications.map(n => `
+                        <div class="notification-item ${!n.isRead ? 'unread' : ''}" onclick="markAsRead('${n._id}', '${n.link}')">
+                            <div class="notification-title">${n.title}</div>
+                            <div class="notification-message">${n.message}</div>
+                            <div class="notification-time">${new Date(n.createdAt).toLocaleString()}</div>
+                        </div>
+                    `).join('');
+                }
+            } catch (error) {
+                console.error('Notifications error:', error);
+            }
+        }
+
+        async function markAsRead(notificationId, link) {
+            try {
+                await fetch(`${API_BASE}/notifications/${notificationId}/read`, { method: 'PUT' });
+                loadNotifications();
+                if (link && link !== 'null') {
+                    // Handle navigation
+                    console.log('Navigate to:', link);
+                }
+            } catch (error) {
+                console.error('Mark read error:', error);
+            }
+        }
+
+        function toggleNotifications() {
+            document.getElementById('notificationPanel').classList.toggle('show');
+        }
+
+        async function loadAnalytics() {
+            try {
+                const response = await fetch(`${API_BASE}/analytics/dashboard/${citizenId}`);
+                const stats = await response.json();
+                
+                const statsGrid = document.getElementById('statsGrid');
+                let html = `
+                    <div class="stat-card">
+                        <div class="stat-label">My Complaints</div>
+                        <div class="stat-value">${stats.myComplaints || 0}</div>
+                        <div class="stat-subtitle">${stats.resolvedComplaints || 0} resolved</div>
+                    </div>
+                    <div class="stat-card">
+                        <div class="stat-label">Active Projects</div>
+                        <div class="stat-value">${stats.ongoingProjects}</div>
+                        <div class="stat-subtitle">${stats.totalProjects} total</div>
+                    </div>
+                    <div class="stat-card">
+                        <div class="stat-label">Community Balance</div>
+                        <div class="stat-value">₱${stats.currentBalance.toLocaleString()}</div>
+                        <div class="stat-subtitle">Transparent tracking</div>
+                    </div>
+                `;
+                statsGrid.innerHTML = html;
+            } catch (error) {
+                console.error('Analytics error:', error);
+            }
+        }
+
+        async function loadDynamicContent() {
+            const content = document.getElementById('dynamicContent');
+            content.innerHTML = `
+                <div class="section">
+                    <div class="section-header">
+                        <h2 class="section-title">My Complaints</h2>
+                        <button class="btn btn-primary" onclick="showAddComplaintForm()">Submit Complaint</button>
+                    </div>
+                    <div class="tabs">
+                        <div class="tab active" onclick="filterComplaints('all')">All</div>
+                        <div class="tab" onclick="filterComplaints('pending')">Pending</div>
+                        <div class="tab" onclick="filterComplaints('resolved')">Resolved</div>
+                    </div>
+                    <table class="table" id="complaintsTable">
+                        <thead>
+                            <tr>
+                                <th>Title</th>
+                                <th>Status</th>
+                                <th>Priority</th>
+                                <th>Date</th>
+                                <th>Action</th>
+                            </tr>
+                        </thead>
+                        <tbody></tbody>
+                    </table>
+                </div>
+                <div class="section">
+                    <div class="section-header">
+                        <h2 class="section-title">Barangay Map</h2>
+                        <button class="btn btn-secondary" id="getLocationBtn" onclick="getCurrentLocation()">Get My Current Location</button>
+                    </div>
+                    <div id="map"></div>
+                    <p class="info-text" id="locationInfo">Click "Get My Current Location" to enable location services and see your position on the map.</p>
+                </div>
+                <div class="section">
+                    <div class="section-header">
+                        <h2 class="section-title">Ongoing Projects</h2>
+                    </div>
+                    <div id="projectsList"></div>
+                </div>
+            `;
+            await loadComplaints();
+            await loadProjects();
+            initMap();
+        }
+
+        function initMap() {
+            const mapElement = document.getElementById('map');
+            if (!mapElement) return;
+
+            map = L.map('map').setView([14.5995, 120.9842], 13);
+            L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+                attribution: '© OpenStreetMap contributors'
+            }).addTo(map);
+
+            // Add Barangay Hall marker
+            addMarker(BARANGAY_HALL.title, BARANGAY_HALL.location, 'Barangay Hall', 'info-sign');
+
+            // Add user location marker if already saved
+            if (userData && userData.location) {
+                const userLoc = userData.location.split(',').map(c => parseFloat(c.trim()));
+                if (!isNaN(userLoc[0]) && !isNaN(userLoc[1])) {
+                    userLocationMarker = L.marker([userLoc[0], userLoc[1]]).addTo(map)
+                        .bindPopup(`<b>Your Location</b><br>You are here`);
+                    map.setView([userLoc[0], userLoc[1]], 15);
+                    document.getElementById('locationInfo').textContent = `Your location is set: ${userData.location}`;
+                }
+            }
+        }
+
+        function addMarker(title, locationStr, popupText, iconClass = 'user') {
+            const [lat, lng] = locationStr.split(',').map(c => parseFloat(c.trim()));
+            if (!isNaN(lat) && !isNaN(lng)) {
+                const icon = L.divIcon({
+                    className: 'custom-div-icon',
+                    html: iconClass === 'info-sign' ? '<div style="background: blue; width: 20px; height: 20px; border-radius: 50%; border: 2px solid white;"></div>' : '<div style="background: red; width: 20px; height: 20px; border-radius: 50%; border: 2px solid white;"></div>',
+                    iconSize: [20, 20],
+                    iconAnchor: [10, 10]
+                });
+                L.marker([lat, lng], { icon }).addTo(map)
+                    .bindPopup(`<b>${title}</b><br>${popupText}`);
+            }
+        }
+
+        async function getCurrentLocation() {
+            const btn = document.getElementById('getLocationBtn');
+            if (!navigator.geolocation) {
+                alert('Geolocation is not supported by this browser.');
+                return;
+            }
+
+            btn.disabled = true;
+            btn.textContent = 'Getting Location...';
+            document.body.classList.add('loading');
+
+            navigator.geolocation.getCurrentPosition(
+                async (position) => {
+                    const lat = position.coords.latitude.toFixed(6);
+                    const lng = position.coords.longitude.toFixed(6);
+                    const locationStr = `${lat}, ${lng}`;
+
+                    // Add or update marker on map
+                    if (userLocationMarker) {
+                        map.removeLayer(userLocationMarker);
+                    }
+                    userLocationMarker = L.marker([lat, lng]).addTo(map)
+                        .bindPopup(`<b>Your Current Location</b><br>Detected automatically`);
+                    map.setView([lat, lng], 15);
+
+                    // Save to profile
+                    await saveUserLocation(locationStr);
+
+                    document.getElementById('locationInfo').textContent = `Your location: ${locationStr} (saved)`;
+
+                    btn.textContent = 'Location Updated!';
+                    btn.style.backgroundColor = '#3c3';
+                    setTimeout(() => {
+                        btn.textContent = 'Get My Current Location';
+                        btn.style.backgroundColor = '';
+                        btn.disabled = false;
+                        document.body.classList.remove('loading');
+                    }, 2000);
+                },
+                (error) => {
+                    let errorMsg;
+                    switch (error.code) {
+                        case error.PERMISSION_DENIED:
+                            errorMsg = 'Location access denied. Please enable location services.';
+                            break;
+                        case error.POSITION_UNAVAILABLE:
+                            errorMsg = 'Location information unavailable.';
+                            break;
+                        case error.TIMEOUT:
+                            errorMsg = 'Location request timed out.';
+                            break;
+                        default:
+                            errorMsg = 'An unknown error occurred.';
+                            break;
+                    }
+                    alert(errorMsg);
+                    btn.disabled = false;
+                    btn.textContent = 'Get My Current Location';
+                    document.body.classList.remove('loading');
+                },
+                {
+                    enableHighAccuracy: true,
+                    timeout: 10000,
+                    maximumAge: 300000  // 5 minutes
+                }
+            );
+        }
+
+        async function saveUserLocation(location) {
+            try {
+                const response = await fetch(`${API_BASE}/user/${citizenId}`, {
+                    method: 'PUT',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'x-citizen-id': citizenId
+                    },
+                    body: JSON.stringify({ location })
+                });
+
+                if (!response.ok) {
+                    const data = await response.json();
+                    throw new Error(data.error || 'Failed to save location');
+                }
+
+                // Reload profile to update userData.location
+                await loadProfile();
+            } catch (error) {
+                console.error('Save location error:', error);
+                alert('Failed to save location. You can still see it on the map, but it won\'t persist.');
+            }
+        }
+
+        async function loadComplaints() {
+            try {
+                const response = await fetch(`${API_BASE}/complaints?citizenId=${citizenId}`);
+                const complaints = await response.json();
+                const tbody = document.querySelector('#complaintsTable tbody');
+                tbody.innerHTML = complaints.map(c => `
+                    <tr data-status="${c.status}">
+                        <td>${c.title}</td>
+                        <td><span class="status-badge status-${c.status}">${c.status}</span></td>
+                        <td><span class="priority-badge priority-${c.priority}">${c.priority}</span></td>
+                        <td>${new Date(c.createdAt).toLocaleDateString()}</td>
+                        <td><button class="btn btn-secondary" onclick="viewComplaint('${c._id}')">View</button></td>
+                    </tr>
+                `).join('');
+            } catch (error) {
+                console.error('Complaints error:', error);
+            }
+        }
+
+        function filterComplaints(status) {
+            document.querySelectorAll('.tabs .tab').forEach(t => t.classList.remove('active'));
+            event.target.classList.add('active');
+            
+            const rows = document.querySelectorAll('#complaintsTable tr[data-status]');
+            rows.forEach(row => {
+                if (status === 'all' || row.dataset.status === status) {
+                    row.style.display = '';
+                } else {
+                    row.style.display = 'none';
+                }
+            });
+        }
+
+        async function loadProjects() {
+            try {
+                const response = await fetch(`${API_BASE}/projects?status=ongoing`);
+                const projects = await response.json();
+                const list = document.getElementById('projectsList');
+                if (projects.length === 0) {
+                    list.innerHTML = '<div class="empty-state"><div class="empty-state-icon">🏗️</div><p>No ongoing projects</p></div>';
+                } else {
+                    list.innerHTML = projects.map(p => `
+                        <div class="project-item" data-status="${p.status}" style="padding: 1rem; border: 1px solid var(--accent); border-radius: 8px; margin-bottom: 1rem;">
+                            <h3>${p.title}</h3>
+                            <p>${p.description.substring(0, 100)}...</p>
+                            <div class="progress-bar">
+                                <div class="progress-fill" style="width: ${p.progress}%">${p.progress}%</div>
+                            </div>
+                            <span class="status-badge status-${p.status}">${p.status}</span>
+                        </div>
+                    `).join('');
+                }
+            } catch (error) {
+                console.error('Projects error:', error);
+            }
+        }
+
+        // Placeholder for complaint form (assuming similar to previous)
+        function showAddComplaintForm() {
+            // Implement complaint submission form
+            alert('Complaint form implementation placeholder');
+        }
+
+        async function viewComplaint(id) {
+            // Implement view complaint
+            alert('View complaint implementation placeholder');
+        }
+
+        function closeModal() {
+            document.getElementById('modal').classList.remove('show');
+        }
+
+        function logout() {
+            if (confirm('Are you sure you want to logout?')) {
+                localStorage.clear();
+                window.location.href = '/';
+            }
+        }
+
+        // Initialize on load
+        init();
+    </script>
+</body>
+</html>

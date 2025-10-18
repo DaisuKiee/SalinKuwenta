@@ -1,0 +1,1469 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>SalinKuwenta Barangay Official Dashboard</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Manrope:wght@400;500;700;800&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css">
+    <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        :root {
+            --primary: #0A400C;
+            --secondary: #819067;
+            --accent: #B1AB86;
+            --background: #FEFAE0;
+            --danger: #c33;
+            --success: #3c3;
+            --warning: #f90;
+        }
+
+        body {
+            font-family: 'Manrope', sans-serif;
+            background-color: var(--background);
+            min-height: 100vh;
+        }
+
+        .navbar {
+            background: white;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+            padding: 1rem 2rem;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            position: sticky;
+            top: 0;
+            z-index: 100;
+        }
+
+        .navbar-brand {
+            font-size: 1.5rem;
+            font-weight: 800;
+            color: var(--primary);
+        }
+
+        .navbar-user {
+            display: flex;
+            align-items: center;
+            gap: 1rem;
+        }
+
+        .notification-badge {
+            position: relative;
+            cursor: pointer;
+            font-size: 1.5rem;
+        }
+
+        .notification-count {
+            position: absolute;
+            top: -8px;
+            right: -8px;
+            background: var(--danger);
+            color: white;
+            border-radius: 50%;
+            width: 20px;
+            height: 20px;
+            font-size: 0.75rem;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-weight: 700;
+        }
+
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 2rem;
+        }
+
+        .dashboard-header {
+            text-align: center;
+            margin-bottom: 2rem;
+        }
+
+        .dashboard-title {
+            font-size: 2rem;
+            font-weight: 800;
+            color: var(--primary);
+            margin-bottom: 0.5rem;
+        }
+
+        .role-badge {
+            display: inline-block;
+            padding: 0.5rem 1rem;
+            background: var(--secondary);
+            color: white;
+            border-radius: 20px;
+            font-size: 0.875rem;
+            font-weight: 600;
+            text-transform: capitalize;
+        }
+
+        .stats-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+            gap: 1.5rem;
+            margin-bottom: 2rem;
+        }
+
+        .stat-card {
+            background: white;
+            padding: 1.5rem;
+            border-radius: 15px;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+        }
+
+        .stat-label {
+            font-size: 0.875rem;
+            color: var(--secondary);
+            margin-bottom: 0.5rem;
+        }
+
+        .stat-value {
+            font-size: 2rem;
+            font-weight: 800;
+            color: var(--primary);
+        }
+
+        .stat-subtitle {
+            font-size: 0.75rem;
+            color: var(--accent);
+            margin-top: 0.25rem;
+        }
+
+        .section {
+            background: white;
+            padding: 2rem;
+            border-radius: 15px;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+            margin-bottom: 2rem;
+        }
+
+        .section-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 1.5rem;
+        }
+
+        .section-title {
+            font-size: 1.5rem;
+            font-weight: 700;
+            color: var(--primary);
+        }
+
+        .btn {
+            padding: 0.75rem 1.5rem;
+            border: none;
+            border-radius: 8px;
+            font-family: 'Manrope', sans-serif;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.2s;
+        }
+
+        .btn-primary {
+            background: var(--primary);
+            color: white;
+        }
+
+        .btn-primary:hover {
+            background: #0a5010;
+        }
+
+        .btn-secondary {
+            background: var(--secondary);
+            color: white;
+        }
+
+        .btn-danger {
+            background: var(--danger);
+            color: white;
+        }
+
+        .btn-success {
+            background: var(--success);
+            color: white;
+        }
+
+        form {
+            display: grid;
+            gap: 1rem;
+        }
+
+        .form-group {
+            display: flex;
+            flex-direction: column;
+            gap: 0.5rem;
+        }
+
+        .form-row {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 1rem;
+        }
+
+        label {
+            font-size: 0.875rem;
+            font-weight: 600;
+            color: var(--secondary);
+        }
+
+        input, select, textarea {
+            padding: 0.75rem;
+            border: 2px solid rgba(177, 171, 134, 0.3);
+            border-radius: 8px;
+            font-family: 'Manrope', sans-serif;
+            font-size: 1rem;
+        }
+
+        input:focus, select:focus, textarea:focus {
+            outline: none;
+            border-color: var(--primary);
+        }
+
+        textarea {
+            resize: vertical;
+            min-height: 100px;
+        }
+
+        .table {
+            width: 100%;
+            border-collapse: collapse;
+        }
+
+        .table th {
+            background: var(--background);
+            padding: 1rem;
+            text-align: left;
+            font-weight: 600;
+            color: var(--primary);
+        }
+
+        .table td {
+            padding: 1rem;
+            border-bottom: 1px solid rgba(177, 171, 134, 0.2);
+        }
+
+        .table tr:hover {
+            background: var(--background);
+        }
+
+        .status-badge {
+            display: inline-block;
+            padding: 0.25rem 0.75rem;
+            border-radius: 12px;
+            font-size: 0.75rem;
+            font-weight: 600;
+            text-transform: uppercase;
+        }
+
+        .status-pending { background: #fff3cd; color: #856404; }
+        .status-approved { background: #d4edda; color: #155724; }
+        .status-ongoing { background: #cce5ff; color: #004085; }
+        .status-completed { background: #d4edda; color: #155724; }
+        .status-resolved { background: #d4edda; color: #155724; }
+        .status-rejected { background: #f8d7da; color: #721c24; }
+        .status-acknowledged { background: #e2e3e5; color: #383d41; }
+        .status-in_progress { background: #d1ecf1; color: #0c5460; }
+
+        .priority-badge {
+            display: inline-block;
+            padding: 0.25rem 0.75rem;
+            border-radius: 12px;
+            font-size: 0.75rem;
+            font-weight: 600;
+        }
+
+        .priority-low { background: #e0e0e0; color: #666; }
+        .priority-medium { background: #fff3cd; color: #856404; }
+        .priority-high { background: #f8d7da; color: #721c24; }
+        .priority-urgent { background: #dc3545; color: white; }
+
+        #map {
+            height: 400px;
+            border-radius: 10px;
+            margin-top: 1rem;
+        }
+
+        .chart-container {
+            position: relative;
+            height: 300px;
+            margin-top: 1rem;
+        }
+
+        .modal {
+            display: none;
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0,0,0,0.5);
+            z-index: 1000;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .modal.show {
+            display: flex;
+        }
+
+        .modal-content {
+            background: white;
+            padding: 2rem;
+            border-radius: 15px;
+            max-width: 600px;
+            width: 90%;
+            max-height: 90vh;
+            overflow-y: auto;
+        }
+
+        .modal-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 1.5rem;
+        }
+
+        .modal-close {
+            font-size: 1.5rem;
+            cursor: pointer;
+            color: var(--secondary);
+        }
+
+        .notification-panel {
+            position: fixed;
+            right: -400px;
+            top: 70px;
+            width: 400px;
+            height: calc(100vh - 70px);
+            background: white;
+            box-shadow: -2px 0 10px rgba(0,0,0,0.1);
+            transition: right 0.3s;
+            z-index: 99;
+            overflow-y: auto;
+        }
+
+        .notification-panel.show {
+            right: 0;
+        }
+
+        .notification-item {
+            padding: 1rem;
+            border-bottom: 1px solid rgba(177, 171, 134, 0.2);
+            cursor: pointer;
+        }
+
+        .notification-item:hover {
+            background: var(--background);
+        }
+
+        .notification-item.unread {
+            background: #f0f8ff;
+        }
+
+        .notification-title {
+            font-weight: 600;
+            color: var(--primary);
+            margin-bottom: 0.25rem;
+        }
+
+        .notification-message {
+            font-size: 0.875rem;
+            color: var(--secondary);
+        }
+
+        .notification-time {
+            font-size: 0.75rem;
+            color: var(--accent);
+            margin-top: 0.25rem;
+        }
+
+        .progress-bar {
+            width: 100%;
+            height: 20px;
+            background: #e0e0e0;
+            border-radius: 10px;
+            overflow: hidden;
+            margin-top: 0.5rem;
+        }
+
+        .progress-fill {
+            height: 100%;
+            background: linear-gradient(90deg, var(--secondary), var(--primary));
+            transition: width 0.3s;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: white;
+            font-size: 0.75rem;
+            font-weight: 600;
+        }
+
+        .tabs {
+            display: flex;
+            gap: 1rem;
+            margin-bottom: 1.5rem;
+            border-bottom: 2px solid rgba(177, 171, 134, 0.2);
+        }
+
+        .tab {
+            padding: 0.75rem 1.5rem;
+            cursor: pointer;
+            font-weight: 600;
+            color: var(--secondary);
+            border-bottom: 3px solid transparent;
+            transition: all 0.2s;
+        }
+
+        .tab.active {
+            color: var(--primary);
+            border-bottom-color: var(--primary);
+        }
+
+        .tab-content {
+            display: none;
+        }
+
+        .tab-content.active {
+            display: block;
+        }
+
+        .empty-state {
+            text-align: center;
+            padding: 3rem;
+            color: var(--secondary);
+        }
+
+        .empty-state-icon {
+            font-size: 3rem;
+            margin-bottom: 1rem;
+        }
+
+        .project-item {
+            padding: 1rem;
+            border: 1px solid var(--accent);
+            border-radius: 8px;
+            margin-bottom: 1rem;
+        }
+
+        .project-item h3 {
+            margin-bottom: 0.5rem;
+            color: var(--primary);
+        }
+
+        .project-item p {
+            color: var(--secondary);
+            margin-bottom: 0.5rem;
+        }
+
+        @media (max-width: 768px) {
+            .container {
+                padding: 1rem;
+            }
+
+            .stats-grid {
+                grid-template-columns: 1fr;
+            }
+
+            .form-row {
+                grid-template-columns: 1fr;
+            }
+
+            .notification-panel {
+                width: 100%;
+                right: -100%;
+            }
+
+            .table {
+                font-size: 0.875rem;
+            }
+        }
+    </style>
+</head>
+<body>
+    <nav class="navbar">
+        <div class="navbar-brand">SalinKuwenta</div>
+        <div class="navbar-user">
+            <span id="officialUser"></span>
+            <div class="notification-badge" onclick="toggleNotifications()">
+                🔔
+                <span class="notification-count" id="notificationCount" style="display: none;">0</span>
+            </div>
+            <button class="btn btn-danger" onclick="logout()">Logout</button>
+        </div>
+    </nav>
+
+    <div class="notification-panel" id="notificationPanel">
+        <div style="padding: 1rem; border-bottom: 1px solid var(--accent); font-weight: 700; color: var(--primary);">Notifications</div>
+        <div id="notificationsList"></div>
+    </div>
+
+    <div class="container">
+        <div class="dashboard-header">
+            <h1 class="dashboard-title">Barangay Official Dashboard</h1>
+            <span class="role-badge" id="roleBadge"></span>
+        </div>
+
+        <div class="stats-grid" id="statsGrid"></div>
+
+        <div id="roleSpecificContent"></div>
+    </div>
+
+    <div class="modal" id="modal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h3 id="modalTitle">Details</h3>
+                <span class="modal-close" onclick="closeModal()">&times;</span>
+            </div>
+            <div id="modalBody"></div>
+        </div>
+    </div>
+
+    <script>
+        let citizenId, userData, role;
+        const API_BASE = 'http://localhost:3000/api';
+
+        // Check storage (local or session)
+        const lsCitizenId = localStorage.getItem('citizenId');
+        const ssCitizenId = sessionStorage.getItem('citizenId');
+        const lsRole = localStorage.getItem('role');
+        const ssRole = sessionStorage.getItem('role');
+
+        citizenId = lsCitizenId || ssCitizenId;
+        role = lsRole || ssRole;
+
+        if (!citizenId || !['project_officer', 'finance_officer', 'barangay_leader'].includes(role)) {
+            localStorage.clear();
+            sessionStorage.clear();
+            window.location.href = '/';
+        }
+
+        async function init() {
+            await loadProfile();
+            await loadAnalytics();
+            await loadNotifications();
+            await loadRoleSpecificContent();
+        }
+
+        async function loadProfile() {
+            try {
+                const response = await fetch(`${API_BASE}/user/${citizenId}`);
+                const data = await response.json();
+                if (response.ok) {
+                    userData = data;
+                    document.getElementById('officialUser').textContent = `${userData.name} (${userData.role.replace('_', ' ')})`;
+                    document.getElementById('roleBadge').textContent = userData.role.replace('_', ' ');
+                } else {
+                    console.error('Profile fetch failed:', data.error);
+                    document.getElementById('officialUser').textContent = 'Official (Profile Unavailable)';
+                }
+            } catch (error) {
+                console.error('Profile error:', error);
+            }
+        }
+
+        async function loadAnalytics() {
+            try {
+                const response = await fetch(`${API_BASE}/analytics/dashboard/${citizenId}`);
+                const stats = await response.json();
+                
+                const statsGrid = document.getElementById('statsGrid');
+                let html = '';
+                
+                // Role-specific statistics
+                if (role === 'finance_officer') {
+                    html = `
+                        <div class="stat-card">
+                            <div class="stat-label">Pending Fund Approvals</div>
+                            <div class="stat-value">${stats.pendingFundApprovals || 0}</div>
+                            <div class="stat-subtitle">Awaiting review</div>
+                        </div>
+                        <div class="stat-card">
+                            <div class="stat-label">Total Income (YTD)</div>
+                            <div class="stat-value">₱${(stats.income || 0).toLocaleString()}</div>
+                            <div class="stat-subtitle">Year to date</div>
+                        </div>
+                        <div class="stat-card">
+                            <div class="stat-label">Total Expenses (YTD)</div>
+                            <div class="stat-value">₱${(stats.expenses || 0).toLocaleString()}</div>
+                            <div class="stat-subtitle">Year to date</div>
+                        </div>
+                        <div class="stat-card">
+                            <div class="stat-label">Current Balance</div>
+                            <div class="stat-value">₱${(stats.currentBalance || 0).toLocaleString()}</div>
+                            <div class="stat-subtitle">Available funds</div>
+                        </div>
+                    `;
+                } else if (role === 'project_officer') {
+                    html = `
+                        <div class="stat-card">
+                            <div class="stat-label">Pending Complaints</div>
+                            <div class="stat-value">${stats.pendingComplaints || 0}</div>
+                            <div class="stat-subtitle">Needs attention</div>
+                        </div>
+                        <div class="stat-card">
+                            <div class="stat-label">Ongoing Projects</div>
+                            <div class="stat-value">${stats.ongoingProjects || 0}</div>
+                            <div class="stat-subtitle">In progress</div>
+                        </div>
+                        <div class="stat-card">
+                            <div class="stat-label">Completed Projects</div>
+                            <div class="stat-value">${stats.completedProjects || 0}</div>
+                            <div class="stat-subtitle">This year</div>
+                        </div>
+                        <div class="stat-card">
+                            <div class="stat-label">Total Projects</div>
+                            <div class="stat-value">${stats.totalProjects || 0}</div>
+                            <div class="stat-subtitle">All time</div>
+                        </div>
+                    `;
+                } else if (role === 'barangay_leader') {
+                    html = `
+                        <div class="stat-card">
+                            <div class="stat-label">Pending Approvals</div>
+                            <div class="stat-value">${(stats.pendingProjectApprovals || 0) + (stats.pendingFundApprovals || 0)}</div>
+                            <div class="stat-subtitle">Projects & Funds</div>
+                        </div>
+                        <div class="stat-card">
+                            <div class="stat-label">Active Complaints</div>
+                            <div class="stat-value">${stats.pendingComplaints || 0}</div>
+                            <div class="stat-subtitle">Needs resolution</div>
+                        </div>
+                        <div class="stat-card">
+                            <div class="stat-label">Ongoing Projects</div>
+                            <div class="stat-value">${stats.ongoingProjects || 0}</div>
+                            <div class="stat-subtitle">In progress</div>
+                        </div>
+                        <div class="stat-card">
+                            <div class="stat-label">Current Balance</div>
+                            <div class="stat-value">₱${(stats.currentBalance || 0).toLocaleString()}</div>
+                            <div class="stat-subtitle">Fiscal year</div>
+                        </div>
+                    `;
+                }
+                
+                statsGrid.innerHTML = html;
+            } catch (error) {
+                console.error('Analytics error:', error);
+            }
+        }
+
+        async function loadNotifications() {
+            try {
+                const response = await fetch(`${API_BASE}/notifications/${citizenId}`);
+                const notifications = await response.json();
+                const unreadCount = notifications.filter(n => !n.isRead).length;
+                document.getElementById('notificationCount').textContent = unreadCount;
+                document.getElementById('notificationCount').style.display = unreadCount > 0 ? 'flex' : 'none';
+                
+                const list = document.getElementById('notificationsList');
+                list.innerHTML = notifications.map(n => `
+                    <div class="notification-item ${n.isRead ? '' : 'unread'}" onclick="markNotificationRead('${n._id}')">
+                        <div class="notification-title">${n.title}</div>
+                        <div class="notification-message">${n.message}</div>
+                        <div class="notification-time">${new Date(n.createdAt).toLocaleString()}</div>
+                    </div>
+                `).join('');
+            } catch (error) {
+                console.error('Notifications error:', error);
+            }
+        }
+
+        function toggleNotifications() {
+            const panel = document.getElementById('notificationPanel');
+            panel.classList.toggle('show');
+        }
+
+        async function markNotificationRead(id) {
+            try {
+                await fetch(`${API_BASE}/notifications/${id}/read`, { method: 'PUT' });
+                loadNotifications();
+            } catch (error) {
+                console.error('Mark read error:', error);
+            }
+        }
+
+        async function loadRoleSpecificContent() {
+            const container = document.getElementById('roleSpecificContent');
+            
+            if (role === 'finance_officer') {
+                // FINANCE OFFICER: Focus on financial management
+                container.innerHTML = `
+                    <div class="section">
+                        <div class="section-header">
+                            <h2 class="section-title">Pending Fund Approvals</h2>
+                        </div>
+                        <div id="fundApprovalsList"></div>
+                    </div>
+                    
+                    <div class="section">
+                        <div class="section-header">
+                            <h2 class="section-title">Recent Transactions</h2>
+                            <button class="btn btn-primary" onclick="showAddFundForm()">Record Transaction</button>
+                        </div>
+                        <table class="table">
+                            <thead>
+                                <tr>
+                                    <th>Transaction ID</th>
+                                    <th>Type</th>
+                                    <th>Amount</th>
+                                    <th>Description</th>
+                                    <th>Status</th>
+                                    <th>Date</th>
+                                </tr>
+                            </thead>
+                            <tbody id="recentTransactionsTable"></tbody>
+                        </table>
+                    </div>
+                    
+                    <div class="section">
+                        <div class="section-header">
+                            <h2 class="section-title">Financial Overview</h2>
+                        </div>
+                        <div class="chart-container">
+                            <canvas id="overviewChart"></canvas>
+                        </div>
+                    </div>
+                    
+                    <div class="section">
+                        <div class="section-header">
+                            <h2 class="section-title">Budget Summary by Category</h2>
+                        </div>
+                        <div class="chart-container">
+                            <canvas id="categoryChart"></canvas>
+                        </div>
+                    </div>
+                `;
+                await loadFundApprovals();
+                await loadRecentTransactions();
+                await initFinanceCharts();
+                
+            } else if (role === 'project_officer') {
+                // PROJECT OFFICER: Focus on projects and complaints
+                container.innerHTML = `
+                    <div class="section">
+                        <div class="section-header">
+                            <h2 class="section-title">Active Complaints</h2>
+                        </div>
+                        <table class="table">
+                            <thead>
+                                <tr>
+                                    <th>Title</th>
+                                    <th>Status</th>
+                                    <th>Priority</th>
+                                    <th>Date</th>
+                                    <th>Action</th>
+                                </tr>
+                            </thead>
+                            <tbody id="complaintsTable"></tbody>
+                        </table>
+                    </div>
+                    
+                    <div class="section">
+                        <div class="section-header">
+                            <h2 class="section-title">Ongoing Projects</h2>
+                            <button class="btn btn-primary" onclick="showCreateProjectForm()">Create Project</button>
+                        </div>
+                        <div id="projectsList"></div>
+                    </div>
+                    
+                    <div class="section">
+                        <div class="section-header">
+                            <h2 class="section-title">Project Progress Overview</h2>
+                        </div>
+                        <div class="chart-container">
+                            <canvas id="projectProgressChart"></canvas>
+                        </div>
+                    </div>
+                `;
+                await loadComplaints();
+                await loadProjects();
+                await initProjectCharts();
+                
+            } else if (role === 'barangay_leader') {
+                // BARANGAY LEADER: Full overview and approvals
+                container.innerHTML = `
+                    <div class="section">
+                        <div class="section-header">
+                            <h2 class="section-title">Pending Approvals</h2>
+                        </div>
+                        <div class="tabs">
+                            <div class="tab active" onclick="filterApprovals('projects')">Projects</div>
+                            <div class="tab" onclick="filterApprovals('funds')">Funds</div>
+                        </div>
+                        <div id="approvalsList"></div>
+                    </div>
+                    
+                    <div class="section">
+                        <div class="section-header">
+                            <h2 class="section-title">Recent Complaints</h2>
+                        </div>
+                        <table class="table">
+                            <thead>
+                                <tr>
+                                    <th>Title</th>
+                                    <th>Status</th>
+                                    <th>Priority</th>
+                                    <th>Date</th>
+                                    <th>Action</th>
+                                </tr>
+                            </thead>
+                            <tbody id="recentComplaintsTable"></tbody>
+                        </table>
+                    </div>
+                    
+                    <div class="section">
+                        <div class="section-header">
+                            <h2 class="section-title">Ongoing Projects</h2>
+                        </div>
+                        <div id="projectsList"></div>
+                    </div>
+                    
+                    <div class="section">
+                        <div class="section-header">
+                            <h2 class="section-title">Financial Overview</h2>
+                        </div>
+                        <div class="chart-container">
+                            <canvas id="overviewChart"></canvas>
+                        </div>
+                    </div>
+                `;
+                await loadApprovals('projects');
+                await loadRecentComplaints();
+                await loadProjects();
+                await initOverviewChart();
+            }
+        }
+
+        // FINANCE OFFICER FUNCTIONS
+        async function loadFundApprovals() {
+            const list = document.getElementById('fundApprovalsList');
+            try {
+                const response = await fetch(`${API_BASE}/funds?status=pending`);
+                const funds = await response.json();
+                if (funds.length === 0) {
+                    list.innerHTML = '<div class="empty-state"><div class="empty-state-icon">✅</div><p>No pending fund approvals</p></div>';
+                } else {
+                    list.innerHTML = funds.map(f => `
+                        <div style="padding: 1rem; border: 1px solid var(--accent); border-radius: 8px; margin-bottom: 1rem;">
+                            <h3>${f.transactionId} - ${f.subType}</h3>
+                            <p>${f.description}</p>
+                            <p><strong>Amount:</strong> ₱${f.amount.toLocaleString()}</p>
+                            <p><strong>Type:</strong> ${f.type} | <strong>Category:</strong> ${f.category}</p>
+                            <p><strong>Date:</strong> ${new Date(f.transactionDate).toLocaleDateString()}</p>
+                            ${f.receipt ? `<p><a href="${f.receipt}" target="_blank">View Receipt</a></p>` : ''}
+                            <button class="btn btn-success" onclick="approveFund('${f._id}', true)">Approve</button>
+                            <button class="btn btn-danger" onclick="approveFund('${f._id}', false)">Reject</button>
+                        </div>
+                    `).join('');
+                }
+            } catch (error) {
+                console.error('Fund approvals error:', error);
+                list.innerHTML = '<p>Error loading fund approvals</p>';
+            }
+        }
+
+        async function loadRecentTransactions() {
+            try {
+                const response = await fetch(`${API_BASE}/funds?limit=20&sort=transactionDate:desc`);
+                const funds = await response.json();
+                const tbody = document.getElementById('recentTransactionsTable');
+                tbody.innerHTML = funds.map(f => `
+                    <tr>
+                        <td>${f.transactionId}</td>
+                        <td>${f.type}</td>
+                        <td>₱${f.amount.toLocaleString()}</td>
+                        <td>${f.description}</td>
+                        <td><span class="status-badge status-${f.status}">${f.status}</span></td>
+                        <td>${new Date(f.transactionDate).toLocaleDateString()}</td>
+                    </tr>
+                `).join('');
+            } catch (error) {
+                console.error('Recent transactions error:', error);
+            }
+        }
+
+        async function approveFund(fundId, approved) {
+            try {
+                const response = await fetch(`${API_BASE}/funds/${fundId}/approve`, {
+                    method: 'PUT',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ approved, approvedBy: citizenId })
+                });
+                if (response.ok) {
+                    alert(`Fund ${approved ? 'approved' : 'rejected'} successfully`);
+                    await loadFundApprovals();
+                    await loadAnalytics();
+                } else {
+                    alert('Failed to update fund status');
+                }
+            } catch (error) {
+                console.error('Approve fund error:', error);
+            }
+        }
+
+        function showAddFundForm() {
+            document.getElementById('modalTitle').textContent = 'Record Transaction';
+            document.getElementById('modalBody').innerHTML = `
+                <form onsubmit="submitFund(event)">
+                    <div class="form-row">
+                        <div class="form-group">
+                            <label>Transaction ID</label>
+                            <input type="text" name="transactionId" required>
+                        </div>
+                        <div class="form-group">
+                            <label>Type</label>
+                            <select name="type" required onchange="updateSubTypeOptions(this.value)">
+                                <option value="">Select Type</option>
+                                <option value="income">Income</option>
+                                <option value="expense">Expense</option>
+                            </select>
+                        </div>
+                    </div>
+                    <div class="form-row">
+                        <div class="form-group">
+                            <label>Sub Type</label>
+                            <select name="subType" id="subTypeSelect" required>
+                                <option value="">Select Type First</option>
+                            </select>
+                        </div>
+                        <div class="form-group">
+                            <label>Amount</label>
+                            <input type="number" name="amount" step="0.01" required>
+                        </div>
+                    </div>
+                    <div class="form-group">
+                        <label>Category</label>
+                        <select name="category" required>
+                            <option value="">Select Category</option>
+                            <option value="infrastructure">Infrastructure</option>
+                            <option value="health">Health</option>
+                            <option value="education">Education</option>
+                            <option value="peace_and_order">Peace and Order</option>
+                            <option value="general_services">General Services</option>
+                            <option value="other">Other</option>
+                        </select>
+                    </div>
+                    <div class="form-group">
+                        <label>Description</label>
+                        <textarea name="description" required></textarea>
+                    </div>
+                    <div class="form-group">
+                        <label>Transaction Date</label>
+                        <input type="date" name="transactionDate" required>
+                    </div>
+                    <div class="form-group">
+                        <label>Receipt URL (optional)</label>
+                        <input type="url" name="receipt">
+                    </div>
+                    <button type="submit" class="btn btn-primary">Record Transaction</button>
+                </form>
+            `;
+            document.getElementById('modal').classList.add('show');
+        }
+
+        function updateSubTypeOptions(type) {
+            const subTypeSelect = document.getElementById('subTypeSelect');
+            const incomeTypes = ['IRA', 'Donation', 'Service Fee', 'Other Income'];
+            const expenseTypes = ['Project', 'Salary', 'Utilities', 'Supplies', 'Other Expense'];
+            
+            const options = type === 'income' ? incomeTypes : type === 'expense' ? expenseTypes : [];
+            subTypeSelect.innerHTML = options.map(opt => `<option value="${opt}">${opt}</option>`).join('');
+        }
+
+        async function submitFund(e) {
+            e.preventDefault();
+            const formData = new FormData(e.target);
+            const data = Object.fromEntries(formData);
+            data.recordedBy = citizenId;
+            
+            try {
+                const response = await fetch(`${API_BASE}/funds`, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify(data)
+                });
+                if (response.ok) {
+                    alert('Transaction recorded successfully');
+                    closeModal();
+                    await loadRecentTransactions();
+                    await loadAnalytics();
+                } else {
+                    alert('Failed to record transaction');
+                }
+            } catch (error) {
+                console.error('Submit fund error:', error);
+            }
+        }
+
+        async function initFinanceCharts() {
+            try {
+                const response = await fetch(`${API_BASE}/analytics/financial/${citizenId}`);
+                const data = await response.json();
+                
+                // Overview Chart
+                const ctxOverview = document.getElementById('overviewChart').getContext('2d');
+                new Chart(ctxOverview, {
+                    type: 'bar',
+                    data: {
+                        labels: ['Income', 'Expenses', 'Balance'],
+                        datasets: [{
+                            label: 'Amount (₱)',
+                            data: [data.totalIncome || 0, data.totalExpenses || 0, data.currentBalance || 0],
+                            backgroundColor: ['#3c3', '#c33', '#0A400C']
+                        }]
+                    },
+                    options: {
+                        responsive: true,
+                        maintainAspectRatio: false,
+                        scales: {
+                            y: { beginAtZero: true }
+                        }
+                    }
+                });
+                
+                // Category Chart
+                const ctxCategory = document.getElementById('categoryChart').getContext('2d');
+                new Chart(ctxCategory, {
+                    type: 'doughnut',
+                    data: {
+                        labels: Object.keys(data.byCategory || {}),
+                        datasets: [{
+                            data: Object.values(data.byCategory || {}),
+                            backgroundColor: ['#0A400C', '#819067', '#B1AB86', '#3c3', '#f90', '#c33']
+                        }]
+                    },
+                    options: {
+                        responsive: true,
+                        maintainAspectRatio: false
+                    }
+                });
+            } catch (error) {
+                console.error('Finance charts error:', error);
+            }
+        }
+
+        // PROJECT OFFICER FUNCTIONS
+        async function loadComplaints() {
+            try {
+                const response = await fetch(`${API_BASE}/complaints?status=pending,acknowledged,in_progress`);
+                const complaints = await response.json();
+                const tbody = document.getElementById('complaintsTable');
+                tbody.innerHTML = complaints.map(c => `
+                    <tr>
+                        <td>${c.title}</td>
+                        <td><span class="status-badge status-${c.status}">${c.status}</span></td>
+                        <td><span class="priority-badge priority-${c.priority}">${c.priority}</span></td>
+                        <td>${new Date(c.createdAt).toLocaleDateString()}</td>
+                        <td><button class="btn btn-secondary" onclick="viewComplaint('${c._id}')">View</button></td>
+                    </tr>
+                `).join('');
+            } catch (error) {
+                console.error('Complaints error:', error);
+            }
+        }
+
+        async function viewComplaint(id) {
+            try {
+                const response = await fetch(`${API_BASE}/complaints/${id}`);
+                const complaint = await response.json();
+                document.getElementById('modalTitle').textContent = 'Complaint Details';
+                document.getElementById('modalBody').innerHTML = `
+                    <p><strong>Title:</strong> ${complaint.title}</p>
+                    <p><strong>Description:</strong> ${complaint.description}</p>
+                    <p><strong>Status:</strong> <span class="status-badge status-${complaint.status}">${complaint.status}</span></p>
+                    <p><strong>Priority:</strong> <span class="priority-badge priority-${complaint.priority}">${complaint.priority}</span></p>
+                    <p><strong>Location:</strong> ${complaint.location}</p>
+                    <p><strong>Date:</strong> ${new Date(complaint.createdAt).toLocaleString()}</p>
+                    ${complaint.photo ? `<p><img src="${complaint.photo}" style="max-width: 100%; border-radius: 8px;"></p>` : ''}
+                    <hr>
+                    <form onsubmit="updateComplaintStatus(event, '${id}')">
+                        <div class="form-group">
+                            <label>Update Status</label>
+                            <select name="status" required>
+                                <option value="acknowledged">Acknowledged</option>
+                                <option value="in_progress">In Progress</option>
+                                <option value="resolved">Resolved</option>
+                            </select>
+                        </div>
+                        <div class="form-group">
+                            <label>Response</label>
+                            <textarea name="response" required></textarea>
+                        </div>
+                        <button type="submit" class="btn btn-primary">Update</button>
+                    </form>
+                `;
+                document.getElementById('modal').classList.add('show');
+            } catch (error) {
+                console.error('View complaint error:', error);
+            }
+        }
+
+        async function updateComplaintStatus(e, id) {
+            e.preventDefault();
+            const formData = new FormData(e.target);
+            const data = Object.fromEntries(formData);
+            
+            try {
+                const response = await fetch(`${API_BASE}/complaints/${id}`, {
+                    method: 'PUT',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify(data)
+                });
+                if (response.ok) {
+                    alert('Complaint updated successfully');
+                    closeModal();
+                    await loadComplaints();
+                    await loadAnalytics();
+                } else {
+                    alert('Failed to update complaint');
+                }
+            } catch (error) {
+                console.error('Update complaint error:', error);
+            }
+        }
+
+        async function loadProjects() {
+            try {
+                const response = await fetch(`${API_BASE}/projects?status=ongoing`);
+                const projects = await response.json();
+                const list = document.getElementById('projectsList');
+                if (projects.length === 0) {
+                    list.innerHTML = '<div class="empty-state"><div class="empty-state-icon">📋</div><p>No ongoing projects</p></div>';
+                } else {
+                    list.innerHTML = projects.map(p => `
+                        <div class="project-item">
+                            <h3>${p.projectName}</h3>
+                            <p>${p.description}</p>
+                            <p><strong>Budget:</strong> ₱${p.budget.toLocaleString()} | <strong>Status:</strong> <span class="status-badge status-${p.status}">${p.status}</span></p>
+                            <p><strong>Start:</strong> ${new Date(p.startDate).toLocaleDateString()} | <strong>End:</strong> ${new Date(p.endDate).toLocaleDateString()}</p>
+                            <div class="progress-bar">
+                                <div class="progress-fill" style="width: ${p.progress || 0}%">${p.progress || 0}%</div>
+                            </div>
+                            <button class="btn btn-secondary" onclick="updateProjectProgress('${p._id}', ${p.progress || 0})">Update Progress</button>
+                        </div>
+                    `).join('');
+                }
+            } catch (error) {
+                console.error('Projects error:', error);
+            }
+        }
+
+        function showCreateProjectForm() {
+            document.getElementById('modalTitle').textContent = 'Create New Project';
+            document.getElementById('modalBody').innerHTML = `
+                <form onsubmit="submitProject(event)">
+                    <div class="form-group">
+                        <label>Project Name</label>
+                        <input type="text" name="projectName" required>
+                    </div>
+                    <div class="form-group">
+                        <label>Description</label>
+                        <textarea name="description" required></textarea>
+                    </div>
+                    <div class="form-row">
+                        <div class="form-group">
+                            <label>Budget</label>
+                            <input type="number" name="budget" step="0.01" required>
+                        </div>
+                        <div class="form-group">
+                            <label>Category</label>
+                            <select name="category" required>
+                                <option value="infrastructure">Infrastructure</option>
+                                <option value="health">Health</option>
+                                <option value="education">Education</option>
+                                <option value="peace_and_order">Peace and Order</option>
+                                <option value="other">Other</option>
+                            </select>
+                        </div>
+                    </div>
+                    <div class="form-row">
+                        <div class="form-group">
+                            <label>Start Date</label>
+                            <input type="date" name="startDate" required>
+                        </div>
+                        <div class="form-group">
+                            <label>End Date</label>
+                            <input type="date" name="endDate" required>
+                        </div>
+                    </div>
+                    <div class="form-group">
+                        <label>Location</label>
+                        <input type="text" name="location" required>
+                    </div>
+                    <button type="submit" class="btn btn-primary">Create Project</button>
+                </form>
+            `;
+            document.getElementById('modal').classList.add('show');
+        }
+
+        async function submitProject(e) {
+            e.preventDefault();
+            const formData = new FormData(e.target);
+            const data = Object.fromEntries(formData);
+            data.proposedBy = citizenId;
+            
+            try {
+                const response = await fetch(`${API_BASE}/projects`, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify(data)
+                });
+                if (response.ok) {
+                    alert('Project created successfully');
+                    closeModal();
+                    await loadProjects();
+                    await loadAnalytics();
+                } else {
+                    alert('Failed to create project');
+                }
+            } catch (error) {
+                console.error('Submit project error:', error);
+            }
+        }
+
+        function updateProjectProgress(projectId, currentProgress) {
+            document.getElementById('modalTitle').textContent = 'Update Project Progress';
+            document.getElementById('modalBody').innerHTML = `
+                <form onsubmit="submitProjectProgress(event, '${projectId}')">
+                    <div class="form-group">
+                        <label>Progress (%)</label>
+                        <input type="number" name="progress" min="0" max="100" value="${currentProgress}" required>
+                    </div>
+                    <div class="form-group">
+                        <label>Update Notes</label>
+                        <textarea name="notes" required></textarea>
+                    </div>
+                    <button type="submit" class="btn btn-primary">Update</button>
+                </form>
+            `;
+            document.getElementById('modal').classList.add('show');
+        }
+
+        async function submitProjectProgress(e, projectId) {
+            e.preventDefault();
+            const formData = new FormData(e.target);
+            const data = Object.fromEntries(formData);
+            
+            try {
+                const response = await fetch(`${API_BASE}/projects/${projectId}`, {
+                    method: 'PUT',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify(data)
+                });
+                if (response.ok) {
+                    alert('Progress updated successfully');
+                    closeModal();
+                    await loadProjects();
+                } else {
+                    alert('Failed to update progress');
+                }
+            } catch (error) {
+                console.error('Update progress error:', error);
+            }
+        }
+
+        async function initProjectCharts() {
+            try {
+                const response = await fetch(`${API_BASE}/analytics/projects/${citizenId}`);
+                const data = await response.json();
+                
+                const ctx = document.getElementById('projectProgressChart').getContext('2d');
+                new Chart(ctx, {
+                    type: 'bar',
+                    data: {
+                        labels: data.projectNames || [],
+                        datasets: [{
+                            label: 'Progress (%)',
+                            data: data.projectProgress || [],
+                            backgroundColor: '#0A400C'
+                        }]
+                    },
+                    options: {
+                        responsive: true,
+                        maintainAspectRatio: false,
+                        scales: {
+                            y: { 
+                                beginAtZero: true,
+                                max: 100
+                            }
+                        }
+                    }
+                });
+            } catch (error) {
+                console.error('Project charts error:', error);
+            }
+        }
+
+        // BARANGAY LEADER FUNCTIONS
+        let currentApprovalType = 'projects';
+
+        async function loadApprovals(type) {
+            currentApprovalType = type;
+            const list = document.getElementById('approvalsList');
+            
+            // Update tab styling
+            document.querySelectorAll('.tab').forEach(tab => {
+                tab.classList.remove('active');
+            });
+            event?.target?.classList.add('active');
+            
+            if (type === 'projects') {
+                try {
+                    const response = await fetch(`${API_BASE}/projects?status=pending`);
+                    const projects = await response.json();
+                    if (projects.length === 0) {
+                        list.innerHTML = '<div class="empty-state"><div class="empty-state-icon">✅</div><p>No pending project approvals</p></div>';
+                    } else {
+                        list.innerHTML = projects.map(p => `
+                            <div class="project-item">
+                                <h3>${p.projectName}</h3>
+                                <p>${p.description}</p>
+                                <p><strong>Budget:</strong> ₱${p.budget.toLocaleString()}</p>
+                                <p><strong>Duration:</strong> ${new Date(p.startDate).toLocaleDateString()} to ${new Date(p.endDate).toLocaleDateString()}</p>
+                                <p><strong>Category:</strong> ${p.category}</p>
+                                <button class="btn btn-success" onclick="approveProject('${p._id}', true)">Approve</button>
+                                <button class="btn btn-danger" onclick="approveProject('${p._id}', false)">Reject</button>
+                            </div>
+                        `).join('');
+                    }
+                } catch (error) {
+                    console.error('Project approvals error:', error);
+                }
+            } else if (type === 'funds') {
+                try {
+                    const response = await fetch(`${API_BASE}/funds?status=pending`);
+                    const funds = await response.json();
+                    if (funds.length === 0) {
+                        list.innerHTML = '<div class="empty-state"><div class="empty-state-icon">✅</div><p>No pending fund approvals</p></div>';
+                    } else {
+                        list.innerHTML = funds.map(f => `
+                            <div style="padding: 1rem; border: 1px solid var(--accent); border-radius: 8px; margin-bottom: 1rem;">
+                                <h3>${f.transactionId} - ${f.subType}</h3>
+                                <p>${f.description}</p>
+                                <p><strong>Amount:</strong> ₱${f.amount.toLocaleString()}</p>
+                                <p><strong>Type:</strong> ${f.type} | <strong>Category:</strong> ${f.category}</p>
+                                <button class="btn btn-success" onclick="approveFund('${f._id}', true)">Approve</button>
+                                <button class="btn btn-danger" onclick="approveFund('${f._id}', false)">Reject</button>
+                            </div>
+                        `).join('');
+                    }
+                } catch (error) {
+                    console.error('Fund approvals error:', error);
+                }
+            }
+        }
+
+        function filterApprovals(type) {
+            loadApprovals(type);
+        }
+
+        async function approveProject(projectId, approved) {
+            try {
+                const response = await fetch(`${API_BASE}/projects/${projectId}/approve`, {
+                    method: 'PUT',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ approved, approvedBy: citizenId })
+                });
+                if (response.ok) {
+                    alert(`Project ${approved ? 'approved' : 'rejected'} successfully`);
+                    await loadApprovals('projects');
+                    await loadAnalytics();
+                } else {
+                    alert('Failed to update project status');
+                }
+            } catch (error) {
+                console.error('Approve project error:', error);
+            }
+        }
+
+        async function loadRecentComplaints() {
+            try {
+                const response = await fetch(`${API_BASE}/complaints?limit=10`);
+                const complaints = await response.json();
+                const tbody = document.getElementById('recentComplaintsTable');
+                tbody.innerHTML = complaints.map(c => `
+                    <tr>
+                        <td>${c.title}</td>
+                        <td><span class="status-badge status-${c.status}">${c.status}</span></td>
+                        <td><span class="priority-badge priority-${c.priority}">${c.priority}</span></td>
+                        <td>${new Date(c.createdAt).toLocaleDateString()}</td>
+                        <td><button class="btn btn-secondary" onclick="viewComplaint('${c._id}')">View</button></td>
+                    </tr>
+                `).join('');
+            } catch (error) {
+                console.error('Recent complaints error:', error);
+            }
+        }
+
+        async function initOverviewChart() {
+            try {
+                const response = await fetch(`${API_BASE}/analytics/financial/${citizenId}`);
+                const data = await response.json();
+                
+                const ctx = document.getElementById('overviewChart').getContext('2d');
+                new Chart(ctx, {
+                    type: 'line',
+                    data: {
+                        labels: data.monthlyLabels || [],
+                        datasets: [{
+                            label: 'Income',
+                            data: data.monthlyIncome || [],
+                            borderColor: '#3c3',
+                            backgroundColor: 'rgba(51, 204, 51, 0.1)',
+                            tension: 0.4
+                        }, {
+                            label: 'Expenses',
+                            data: data.monthlyExpenses || [],
+                            borderColor: '#c33',
+                            backgroundColor: 'rgba(204, 51, 51, 0.1)',
+                            tension: 0.4
+                        }]
+                    },
+                    options: {
+                        responsive: true,
+                        maintainAspectRatio: false,
+                        scales: {
+                            y: { beginAtZero: true }
+                        }
+                    }
+                });
+            } catch (error) {
+                console.error('Overview chart error:', error);
+            }
+        }
+
+        // UTILITY FUNCTIONS
+        function closeModal() {
+            document.getElementById('modal').classList.remove('show');
+        }
+
+        function logout() {
+            localStorage.clear();
+            sessionStorage.clear();
+            window.location.href = '/';
+        }
+
+        // Initialize on page load
+        init();
+        
+        // Refresh data periodically
+        setInterval(() => {
+            loadNotifications();
+            loadAnalytics();
+        }, 60000); // Every minute
+    </script>
+</body>
+</html>

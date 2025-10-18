@@ -1,0 +1,838 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>SalinKuwenta - Authentication</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Manrope:wght@400;500;700;800&display=swap" rel="stylesheet">
+
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        :root {
+            --primary: #0A400C;
+            --secondary: #819067;
+            --accent: #B1AB86;
+            --background: #FEFAE0;
+        }
+
+        body {
+            font-family: 'Manrope', sans-serif;
+            background-color: var(--background);
+            min-height: 100vh;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            padding: 20px;
+        }
+
+        .auth-container {
+            position: relative;
+            width: 100%;
+            max-width: 1000px;
+            min-height: 600px;
+            background: white;
+            border-radius: 20px;
+            box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.25);
+            overflow: hidden;
+        }
+
+        .forms-container {
+            position: absolute;
+            width: 100%;
+            height: 100%;
+            top: 0;
+            left: 0;
+        }
+
+        .form-wrapper {
+            position: absolute;
+            top: 0;
+            height: 100%;
+            width: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            padding: 40px;
+            transition: all 0.6s ease-in-out;
+            overflow-y: auto;
+        }
+
+        .login-form {
+            left: 0;
+            z-index: 2;
+        }
+
+        .register-form {
+            left: 50%;
+            opacity: 0;
+            z-index: 1;
+        }
+
+        .auth-container.register-mode .login-form {
+            opacity: 0;
+            z-index: 1;
+            pointer-events: none;
+        }
+
+        .auth-container.register-mode .register-form {
+            opacity: 1;
+            z-index: 2;
+            pointer-events: all;
+        }
+
+        .form-content {
+            width: 100%;
+            max-width: 400px;
+        }
+
+        .form-title {
+            font-size: 2rem;
+            font-weight: 700;
+            color: var(--primary);
+            margin-bottom: 0.5rem;
+        }
+
+        .form-subtitle {
+            color: var(--secondary);
+            margin-bottom: 2rem;
+        }
+
+        .form-group {
+            margin-bottom: 1.25rem;
+        }
+
+        label {
+            display: block;
+            font-size: 0.875rem;
+            font-weight: 500;
+            color: var(--secondary);
+            margin-bottom: 0.5rem;
+        }
+
+        input[type="text"],
+        input[type="email"],
+        input[type="password"],
+        input[type="date"],
+        select {
+            width: 100%;
+            padding: 0.875rem 1rem;
+            border: 2px solid rgba(177, 171, 134, 0.5);
+            border-radius: 0.75rem;
+            background-color: var(--background);
+            color: var(--primary);
+            font-family: 'Manrope', sans-serif;
+            font-size: 1rem;
+            outline: none;
+            transition: border-color 0.2s;
+        }
+
+        select {
+            cursor: pointer;
+        }
+
+        input:focus,
+        select:focus {
+            border-color: var(--primary);
+        }
+
+        input::placeholder {
+            color: var(--accent);
+        }
+
+        input:disabled {
+            background-color: #f0f0f0;
+            cursor: not-allowed;
+            opacity: 0.7;
+        }
+
+        .citizen-id-display {
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+        }
+
+        .citizen-id-display input {
+            flex: 1;
+        }
+
+        .copy-btn {
+            padding: 0.875rem 1rem;
+            background-color: var(--secondary);
+            color: white;
+            border: none;
+            border-radius: 0.75rem;
+            cursor: pointer;
+            font-family: 'Manrope', sans-serif;
+            font-size: 0.875rem;
+            font-weight: 600;
+            transition: background-color 0.2s;
+            white-space: nowrap;
+        }
+
+        .copy-btn:hover {
+            background-color: var(--primary);
+        }
+
+        .copy-btn:disabled {
+            background-color: #ccc;
+            cursor: not-allowed;
+        }
+
+        .remember-forgot {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            margin: 1rem 0;
+            font-size: 0.875rem;
+        }
+
+        .remember-me {
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+        }
+
+        input[type="checkbox"] {
+            width: 1rem;
+            height: 1rem;
+            border: 1px solid var(--secondary);
+            border-radius: 0.25rem;
+            cursor: pointer;
+        }
+
+        .forgot-link,
+        .switch-link {
+            color: var(--secondary);
+            text-decoration: none;
+            transition: color 0.2s;
+        }
+
+        .forgot-link:hover,
+        .switch-link:hover {
+            color: var(--primary);
+        }
+
+        .submit-btn {
+            width: 100%;
+            padding: 0.875rem;
+            background-color: var(--primary);
+            color: var(--background);
+            font-weight: 700;
+            font-size: 1rem;
+            border: none;
+            border-radius: 0.75rem;
+            cursor: pointer;
+            transition: background-color 0.2s;
+            font-family: 'Manrope', sans-serif;
+            margin-top: 1rem;
+        }
+
+        .submit-btn:hover {
+            background-color: rgba(10, 64, 12, 0.9);
+        }
+
+        .submit-btn:disabled {
+            background-color: #ccc;
+            cursor: not-allowed;
+            opacity: 0.7;
+        }
+
+        .switch-text {
+            text-align: center;
+            margin-top: 1.5rem;
+            font-size: 0.875rem;
+            color: var(--secondary);
+        }
+
+        .switch-link {
+            font-weight: 600;
+            color: var(--primary);
+            margin-left: 0.25rem;
+        }
+
+        .switch-link:hover {
+            text-decoration: underline;
+        }
+
+        /* Overlay Panels */
+        .overlay-container {
+            position: absolute;
+            top: 0;
+            left: 50%;
+            width: 50%;
+            height: 100%;
+            overflow: hidden;
+            transition: transform 0.6s ease-in-out;
+            z-index: 100;
+            pointer-events: none;
+        }
+
+        .auth-container.register-mode .overlay-container {
+            transform: translateX(-100%);
+            pointer-events: none;
+        }
+
+        .overlay {
+            position: relative;
+            background: linear-gradient(135deg, var(--primary) 0%, var(--secondary) 100%);
+            color: var(--background);
+            width: 200%;
+            height: 100%;
+            left: -100%;
+            transform: translateX(0);
+            transition: transform 0.6s ease-in-out;
+        }
+
+        .auth-container.register-mode .overlay {
+            transform: translateX(50%);
+        }
+
+        .overlay-panel {
+            position: absolute;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            padding: 40px;
+            text-align: center;
+            top: 0;
+            height: 100%;
+            width: 50%;
+            transform: translateX(0);
+            transition: transform 0.6s ease-in-out;
+            pointer-events: all;
+        }
+
+        .overlay-left {
+            transform: translateX(-20%);
+            left: 0;
+        }
+
+        .auth-container.register-mode .overlay-left {
+            transform: translateX(0);
+        }
+
+        .overlay-right {
+            right: 0;
+            transform: translateX(0);
+        }
+
+        .auth-container.register-mode .overlay-right {
+            transform: translateX(20%);
+        }
+
+        .overlay-title {
+            font-size: 2.5rem;
+            font-weight: 800;
+            margin-bottom: 1rem;
+        }
+
+        .overlay-text {
+            font-size: 1rem;
+            line-height: 1.6;
+            margin-bottom: 2rem;
+            opacity: 0.9;
+        }
+
+        .overlay-btn {
+            padding: 0.875rem 2.5rem;
+            background-color: transparent;
+            border: 2px solid var(--background);
+            color: var(--background);
+            font-weight: 700;
+            font-size: 0.875rem;
+            border-radius: 9999px;
+            cursor: pointer;
+            transition: all 0.3s;
+            font-family: 'Manrope', sans-serif;
+            text-transform: uppercase;
+            letter-spacing: 0.05em;
+        }
+
+        .overlay-btn:hover {
+            background-color: var(--background);
+            color: var(--primary);
+        }
+
+        .error-message,
+        .success-message {
+            display: none;
+            padding: 0.75rem;
+            margin-top: 0.5rem;
+            border-radius: 0.5rem;
+            font-size: 0.875rem;
+        }
+
+        .error-message {
+            background-color: #fee;
+            border: 1px solid #fcc;
+            color: #c33;
+        }
+
+        .success-message {
+            background-color: #efe;
+            border: 1px solid #cfc;
+            color: #3c3;
+        }
+
+        .error-message.show,
+        .success-message.show {
+            display: block;
+        }
+
+        .info-text {
+            font-size: 0.75rem;
+            color: var(--secondary);
+            margin-top: 0.25rem;
+        }
+
+        .password-match-info {
+            font-size: 0.75rem;
+            margin-top: 0.25rem;
+        }
+
+        /* Responsive Design */
+        @media (max-width: 768px) {
+            .auth-container {
+                min-height: auto;
+            }
+
+            .form-wrapper,
+            .overlay-container {
+                width: 100%;
+            }
+
+            .overlay-container {
+                display: none;
+            }
+
+            .form-wrapper {
+                position: relative;
+                padding: 30px 20px;
+            }
+
+            .login-form,
+            .register-form {
+                left: 0 !important;
+            }
+
+            .auth-container.register-mode .login-form {
+                display: none;
+            }
+
+            .register-form {
+                display: none;
+            }
+
+            .auth-container.register-mode .register-form {
+                display: flex;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="auth-container" id="authContainer">
+        <div class="forms-container">
+            <!-- Login Form -->
+            <div class="form-wrapper login-form">
+                <div class="form-content">
+                    <h2 class="form-title">Welcome Back</h2>
+                    <p class="form-subtitle">Please enter your Citizen ID and password to log in to SalinKuwenta.</p>
+                    
+                    <form id="loginForm">
+                        <div class="form-group">
+                            <label for="login-citizen-id">Citizen ID</label>
+                            <input type="text" id="login-citizen-id" name="citizen-id" placeholder="Enter your Citizen ID" required>
+                        </div>
+
+                        <div class="form-group">
+                            <label for="login-password">Password</label>
+                            <input type="password" id="login-password" name="password" placeholder="Enter your password" required>
+                        </div>
+
+                        <div class="remember-forgot">
+                            <div class="remember-me">
+                                <input type="checkbox" id="remember-me">
+                                <label for="remember-me">Remember Me</label>
+                            </div>
+                            <a href="#" class="forgot-link" onclick="showForgotPassword()">Forgot Password?</a>
+                        </div>
+
+                        <div id="login-error-message" class="error-message"></div>
+                        <button type="submit" class="submit-btn">Login</button>
+                    </form>
+
+                    <div class="switch-text">
+                        Don't have an account? 
+                        <a href="#" class="switch-link" onclick="showRegister()">Register Here</a>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Register Form -->
+            <div class="form-wrapper register-form">
+                <div class="form-content">
+                    <h2 class="form-title">Create Account</h2>
+                    <p class="form-subtitle">Join SalinKuwenta and help build a better community.</p>
+                    
+                    <form id="registerForm">
+                        <div class="form-group">
+                            <label for="register-name">Full Name</label>
+                            <input type="text" id="register-name" name="name" placeholder="Enter your full name" required>
+                        </div>
+
+                        <div class="form-group">
+                            <label for="register-email">Email Address</label>
+                            <input type="email" id="register-email" name="email" placeholder="Enter your email" required>
+                        </div>
+
+                        <div class="form-group">
+                            <label for="register-birthdate">Birthdate</label>
+                            <input type="date" id="register-birthdate" name="birthdate" required>
+                            <div id="ageInfo" class="info-text"></div>
+                        </div>
+
+                        <div class="form-group">
+                            <label for="register-password">Password</label>
+                            <input type="password" id="register-password" name="password" placeholder="Create a password" required>
+                            <div id="passwordInfo" class="info-text">Minimum 8 characters</div>
+                        </div>
+
+                        <div class="form-group">
+                            <label for="confirm-password">Confirm Password</label>
+                            <input type="password" id="confirm-password" name="confirm-password" placeholder="Confirm your password" required>
+                            <div id="passwordMatchInfo" class="password-match-info"></div>
+                        </div>
+
+                        <div class="form-group">
+                            <label for="register-citizen-id">Citizen ID</label>
+                            <div class="citizen-id-display">
+                                <input type="text" id="register-citizen-id" name="citizen-id" placeholder="Will be generated" disabled>
+                                <button type="button" id="copyCitizenId" class="copy-btn" disabled>Copy ID</button>
+                            </div>
+                        </div>
+
+                        <div id="error-message" class="error-message"></div>
+                        <div id="success-message" class="success-message"></div>
+                        <button type="submit" class="submit-btn">Register</button>
+                    </form>
+
+                    <div class="switch-text">
+                        Already have an account? 
+                        <a href="#" class="switch-link" onclick="showLogin()">Login Here</a>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Overlay Panels -->
+        <div class="overlay-container">
+            <div class="overlay">
+                <div class="overlay-panel overlay-left">
+                    <h1 class="overlay-title">Welcome Back!</h1>
+                    <p class="overlay-text">To keep connected with us, please login with your personal info</p>
+                    <button class="overlay-btn" onclick="showLogin()">Login</button>
+                </div>
+                <div class="overlay-panel overlay-right">
+                    <h1 class="overlay-title">Hello, Friend!</h1>
+                    <p class="overlay-text">Enter your personal details and start your journey with us</p>
+                    <button class="overlay-btn" onclick="showRegister()">Register</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        let isRegisterMode = false;
+
+        function showRegister() {
+            document.getElementById('authContainer').classList.add('register-mode');
+            isRegisterMode = true;
+        }
+
+        function showLogin() {
+            document.getElementById('authContainer').classList.remove('register-mode');
+            isRegisterMode = false;
+        }
+
+        function showForgotPassword() {
+            alert('Forgot password functionality coming soon. For now, contact admin.');
+        }
+
+        // Calculate age from birthdate
+        function calculateAge(birthdate) {
+            if (!birthdate) return 0;
+            const today = new Date();
+            const birth = new Date(birthdate);
+            if (isNaN(birth.getTime())) return 0;
+            let age = today.getFullYear() - birth.getFullYear();
+            const monthDiff = today.getMonth() - birth.getMonth();
+            if (monthDiff < 0 || (monthDiff === 0 && today.getDate() < birth.getDate())) {
+                age--;
+            }
+            return age;
+        }
+
+        // Check age in real-time
+        document.getElementById('register-birthdate').addEventListener('change', function() {
+            const age = calculateAge(this.value);
+            const ageInfo = document.getElementById('ageInfo');
+            
+            if (age < 18) {
+                ageInfo.textContent = `You are ${age} years old. Must be 18 or older.`;
+                ageInfo.style.color = '#c33';
+                this.style.borderColor = '#fcc';
+            } else {
+                ageInfo.textContent = `Age: ${age} years old ✓`;
+                ageInfo.style.color = '#3c3';
+                this.style.borderColor = 'rgba(177, 171, 134, 0.5)';
+            }
+        });
+
+        // Validate password strength
+        document.getElementById('register-password').addEventListener('input', function() {
+            const password = this.value;
+            const info = document.getElementById('passwordInfo');
+            
+            if (password.length === 0) {
+                info.textContent = 'Minimum 8 characters';
+                info.style.color = 'var(--secondary)';
+                return;
+            }
+            
+            let strength = 0;
+            if (password.length >= 8) strength++;
+            if (/[a-z]/.test(password)) strength++;
+            if (/[A-Z]/.test(password)) strength++;
+            if (/[0-9]/.test(password)) strength++;
+            if (/[^a-zA-Z0-9]/.test(password)) strength++;
+            
+            if (strength < 2) {
+                info.textContent = 'Weak password';
+                info.style.color = '#c33';
+            } else if (strength < 4) {
+                info.textContent = 'Moderate password';
+                info.style.color = '#f90';
+            } else {
+                info.textContent = 'Strong password ✓';
+                info.style.color = '#3c3';
+            }
+        });
+
+        // Real-time password match indicator
+        document.getElementById('confirm-password').addEventListener('input', function() {
+            const password = document.getElementById('register-password').value;
+            const confirmPassword = this.value;
+            const matchInfo = document.getElementById('passwordMatchInfo');
+            
+            if (confirmPassword && password !== confirmPassword) {
+                this.style.borderColor = '#fcc';
+                matchInfo.textContent = 'Passwords do not match';
+                matchInfo.style.color = '#c33';
+            } else if (confirmPassword && password === confirmPassword) {
+                this.style.borderColor = '#cfc';
+                matchInfo.textContent = 'Passwords match ✓';
+                matchInfo.style.color = '#3c3';
+            } else {
+                this.style.borderColor = 'rgba(177, 171, 134, 0.5)';
+                matchInfo.textContent = '';
+            }
+        });
+
+        // Register form submission
+        document.getElementById('registerForm').addEventListener('submit', async function(e) {
+            e.preventDefault();
+            
+            const name = document.getElementById('register-name').value;
+            const email = document.getElementById('register-email').value;
+            const birthdate = document.getElementById('register-birthdate').value;
+            const password = document.getElementById('register-password').value;
+            const confirmPassword = document.getElementById('confirm-password').value;
+            const errorMessage = document.getElementById('error-message');
+            const successMessage = document.getElementById('success-message');
+            const citizenIdInput = document.getElementById('register-citizen-id');
+            const copyBtn = document.getElementById('copyCitizenId');
+            
+            // Clear previous messages
+            errorMessage.classList.remove('show');
+            successMessage.classList.remove('show');
+            errorMessage.textContent = '';
+            successMessage.textContent = '';
+            
+            // Validate passwords match
+            if (password !== confirmPassword) {
+                errorMessage.textContent = 'Passwords do not match!';
+                errorMessage.classList.add('show');
+                return;
+            }
+            
+            // Validate age
+            const age = calculateAge(birthdate);
+            if (age < 18) {
+                errorMessage.textContent = 'You must be 18 years or older to register!';
+                errorMessage.classList.add('show');
+                return;
+            }
+            
+            // Validate password strength
+            if (password.length < 8) {
+                errorMessage.textContent = 'Password must be at least 8 characters!';
+                errorMessage.classList.add('show');
+                return;
+            }
+            
+            // Disable submit button during registration
+            const submitBtn = document.querySelector('#registerForm .submit-btn');
+            submitBtn.disabled = true;
+            submitBtn.textContent = 'Creating Account...';
+            
+            try {
+                const response = await fetch('http://localhost:3000/api/register', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ name, email, birthdate, password })
+                });
+                
+                const data = await response.json();
+                
+                if (response.ok) {
+                    // Update display with backend-generated ID
+                    citizenIdInput.value = data.citizenId;
+                    citizenIdInput.disabled = false; // Enable for visibility
+                    copyBtn.disabled = false;
+                    successMessage.textContent = `Registration successful! Your Citizen ID is: ${data.citizenId}. Switching to login...`;
+                    successMessage.classList.add('show');
+                    
+                    // User-friendly: Auto-switch to login after 2 seconds and fill form
+                    setTimeout(() => {
+                        showLogin();
+                        document.getElementById('login-citizen-id').value = data.citizenId;
+                        alert(`Welcome aboard SalinKuwenta! Your Citizen ID (${data.citizenId}) is ready. You can now log in to access your role-based dashboard.`);
+                    }, 2000);
+                } else {
+                    errorMessage.textContent = data.error || 'Registration failed. Please try again.';
+                    errorMessage.classList.add('show');
+                    submitBtn.disabled = false;
+                    submitBtn.textContent = 'Register';
+                }
+            } catch (error) {
+                console.error('Registration error:', error);
+                errorMessage.textContent = 'An error occurred during registration. Please try again.';
+                errorMessage.classList.add('show');
+                submitBtn.disabled = false;
+                submitBtn.textContent = 'Register';
+            }
+        });
+
+        // Copy Citizen ID (now enabled after registration)
+        document.getElementById('copyCitizenId').addEventListener('click', function() {
+            const citizenId = document.getElementById('register-citizen-id').value;
+            if (!citizenId) {
+                alert('Citizen ID not available yet. Please complete registration.');
+                return;
+            }
+            navigator.clipboard.writeText(citizenId).then(() => {
+                const btn = this;
+                const originalText = btn.textContent;
+                btn.textContent = 'Copied!';
+                btn.style.backgroundColor = '#3c3';
+                setTimeout(() => {
+                    btn.textContent = originalText;
+                    btn.style.backgroundColor = '';
+                }, 2000);
+            }).catch(() => {
+                alert('Failed to copy. Please copy manually: ' + citizenId);
+            });
+        });
+
+        // Login form submission (with added debugging)
+        document.getElementById('loginForm').addEventListener('submit', async function(e) {
+            e.preventDefault();
+            
+            const citizenId = document.getElementById('login-citizen-id').value.trim();
+            const password = document.getElementById('login-password').value;
+            const rememberMe = document.getElementById('remember-me').checked;
+            
+            if (!citizenId || !password) {
+                alert('Please enter Citizen ID and password.');
+                return;
+            }
+            
+            console.log('Login attempt:', { citizenId, rememberMe }); // Debug log
+            
+            const loginBtn = document.querySelector('#loginForm .submit-btn');
+            loginBtn.disabled = true;
+            loginBtn.textContent = 'Logging In...';
+            
+            try {
+                const response = await fetch('http://localhost:3000/api/login', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify({ citizenId, password })
+                });
+                
+                const data = await response.json();
+                
+                console.log('Login response:', data); // Debug log
+                
+                if (response.ok) {
+                    console.log('Storing in storage:', { citizenId: data.citizenId, role: data.role, rememberMe }); // Debug log
+                    
+                    // Always store in appropriate storage based on rememberMe
+                    if (rememberMe) {
+                        localStorage.setItem('citizenId', data.citizenId);
+                        localStorage.setItem('role', data.role);
+                        // Clear sessionStorage if present
+                        sessionStorage.removeItem('citizenId');
+                        sessionStorage.removeItem('role');
+                    } else {
+                        sessionStorage.setItem('citizenId', data.citizenId);
+                        sessionStorage.setItem('role', data.role);
+                        // Clear localStorage if present
+                        localStorage.removeItem('citizenId');
+                        localStorage.removeItem('role');
+                    }
+                    
+                    // Show success message before redirect
+                    loginBtn.textContent = 'Login Successful! Redirecting...';
+                    loginBtn.style.backgroundColor = '#3c3';
+                    
+                    console.log('About to redirect to:', data.role === 'admin' ? '/admin' : (['project_officer', 'finance_officer', 'barangay_leader'].includes(data.role) ? '/barangay-official' : `/${data.citizenId}`)); // Debug log
+                    
+                    // Redirect based on role
+                    setTimeout(() => {
+                        if (data.role === 'admin') {
+                            window.location.href = '/admin';
+                        } else if (['project_officer', 'finance_officer', 'barangay_leader'].includes(data.role)) {
+                            window.location.href = '/barangay-official';
+                        } else {
+                            window.location.href = `/${data.citizenId}`;
+                        }
+                    }, 1500); // Increased timeout for visibility
+                } else {
+                    console.log('Login failed:', data.error); // Debug log
+                    alert(data.error || 'Login failed. Please try again.');
+                    loginBtn.disabled = false;
+                    loginBtn.textContent = 'Login';
+                    loginBtn.style.backgroundColor = '';
+                }
+            } catch (error) {
+                console.error('Login fetch error:', error); // Debug log
+                alert('An error occurred during login. Please check console for details.');
+                loginBtn.disabled = false;
+                loginBtn.textContent = 'Login';
+                loginBtn.style.backgroundColor = '';
+            }
+        });
+    </script>
+</body>
+</html>

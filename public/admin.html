@@ -1,0 +1,781 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>SalinKuwenta Admin Dashboard</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Manrope:wght@400;500;700;800&display=swap" rel="stylesheet">
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        :root {
+            --primary: #0A400C;
+            --secondary: #819067;
+            --accent: #B1AB86;
+            --background: #FEFAE0;
+            --danger: #c33;
+            --success: #3c3;
+            --warning: #f90;
+        }
+
+        body {
+            font-family: 'Manrope', sans-serif;
+            background-color: var(--background);
+            min-height: 100vh;
+        }
+
+        .navbar {
+            background: white;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+            padding: 1rem 2rem;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            position: sticky;
+            top: 0;
+            z-index: 100;
+        }
+
+        .navbar-brand {
+            font-size: 1.5rem;
+            font-weight: 800;
+            color: var(--primary);
+        }
+
+        .navbar-user {
+            display: flex;
+            align-items: center;
+            gap: 1rem;
+        }
+
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 2rem;
+        }
+
+        .dashboard-header {
+            text-align: center;
+            margin-bottom: 2rem;
+        }
+
+        .dashboard-title {
+            font-size: 2rem;
+            font-weight: 800;
+            color: var(--primary);
+            margin-bottom: 0.5rem;
+        }
+
+        .role-badge {
+            display: inline-block;
+            padding: 0.5rem 1rem;
+            background: var(--secondary);
+            color: white;
+            border-radius: 20px;
+            font-size: 0.875rem;
+            font-weight: 600;
+            text-transform: capitalize;
+        }
+
+        .stats-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+            gap: 1.5rem;
+            margin-bottom: 2rem;
+        }
+
+        .stat-card {
+            background: white;
+            padding: 1.5rem;
+            border-radius: 15px;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+        }
+
+        .stat-label {
+            font-size: 0.875rem;
+            color: var(--secondary);
+            margin-bottom: 0.5rem;
+        }
+
+        .stat-value {
+            font-size: 2rem;
+            font-weight: 800;
+            color: var(--primary);
+        }
+
+        .stat-subtitle {
+            font-size: 0.75rem;
+            color: var(--accent);
+            margin-top: 0.25rem;
+        }
+
+        .section {
+            background: white;
+            padding: 2rem;
+            border-radius: 15px;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+            margin-bottom: 2rem;
+        }
+
+        .section-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 1.5rem;
+        }
+
+        .section-title {
+            font-size: 1.5rem;
+            font-weight: 700;
+            color: var(--primary);
+        }
+
+        .btn {
+            padding: 0.5rem 1rem;
+            border: none;
+            border-radius: 8px;
+            font-family: 'Manrope', sans-serif;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.2s;
+        }
+
+        .btn-primary {
+            background: var(--primary);
+            color: white;
+        }
+
+        .btn-primary:hover {
+            background: #0a5010;
+        }
+
+        .btn-secondary {
+            background: var(--secondary);
+            color: white;
+        }
+
+        .btn-danger {
+            background: var(--danger);
+            color: white;
+        }
+
+        .btn-edit {
+            background: var(--secondary);
+            color: white;
+        }
+
+        .form-group {
+            display: flex;
+            flex-direction: column;
+            gap: 0.5rem;
+            margin-bottom: 1rem;
+        }
+
+        label {
+            font-size: 0.875rem;
+            font-weight: 600;
+            color: var(--secondary);
+        }
+
+        input, select, textarea {
+            padding: 0.75rem;
+            border: 2px solid rgba(177, 171, 134, 0.3);
+            border-radius: 8px;
+            font-family: 'Manrope', sans-serif;
+            font-size: 1rem;
+        }
+
+        input:focus, select:focus, textarea:focus {
+            outline: none;
+            border-color: var(--primary);
+        }
+
+        textarea {
+            resize: vertical;
+            min-height: 100px;
+        }
+
+        .table {
+            width: 100%;
+            border-collapse: collapse;
+        }
+
+        .table th, .table td {
+            padding: 1rem;
+            text-align: left;
+            border-bottom: 1px solid rgba(177, 171, 134, 0.2);
+        }
+
+        .table th {
+            background: var(--background);
+            font-weight: 600;
+            color: var(--primary);
+        }
+
+        .table tr:hover {
+            background: var(--background);
+        }
+
+        .chart-container {
+            position: relative;
+            height: 400px;
+            margin-top: 1rem;
+        }
+
+        .modal {
+            display: none;
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0,0,0,0.5);
+            z-index: 1000;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .modal.show {
+            display: flex;
+        }
+
+        .modal-content {
+            background: white;
+            padding: 2rem;
+            border-radius: 15px;
+            max-width: 500px;
+            width: 90%;
+            max-height: 90vh;
+            overflow-y: auto;
+        }
+
+        .modal-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 1.5rem;
+        }
+
+        .modal-close {
+            font-size: 1.5rem;
+            cursor: pointer;
+            color: var(--secondary);
+        }
+
+        .status-badge {
+            display: inline-block;
+            padding: 0.25rem 0.75rem;
+            border-radius: 12px;
+            font-size: 0.75rem;
+            font-weight: 600;
+            text-transform: uppercase;
+        }
+
+        .status-pending { background: #fff3cd; color: #856404; }
+        .status-approved { background: #d4edda; color: #155724; }
+        .status-rejected { background: #f8d7da; color: #721c24; }
+
+        .log-entry {
+            padding: 1rem;
+            border-bottom: 1px solid rgba(177, 171, 134, 0.2);
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .log-details {
+            flex: 1;
+        }
+
+        .log-time {
+            font-size: 0.875rem;
+            color: var(--accent);
+        }
+
+        @media (max-width: 768px) {
+            .container {
+                padding: 1rem;
+            }
+
+            .stats-grid {
+                grid-template-columns: 1fr;
+            }
+        }
+    </style>
+</head>
+<body>
+    <nav class="navbar">
+        <div class="navbar-brand">SalinKuwenta Admin</div>
+        <div class="navbar-user">
+            <span id="adminUser"></span>
+            <button class="btn btn-danger" onclick="logout()">Logout</button>
+        </div>
+    </nav>
+
+    <div class="container">
+        <div class="dashboard-header">
+            <h1 class="dashboard-title">Admin Dashboard</h1>
+            <span class="role-badge">Admin</span>
+        </div>
+
+        <div class="stats-grid" id="statsGrid"></div>
+
+        <div class="section">
+            <div class="section-header">
+                <h2 class="section-title">System History Logs</h2>
+            </div>
+            <div id="historyLogs"></div>
+        </div>
+
+        <div class="section">
+            <div class="section-header">
+                <h2 class="section-title">Recent Financial Transactions</h2>
+            </div>
+            <table class="table">
+                <thead>
+                    <tr>
+                        <th>Transaction ID</th>
+                        <th>Type</th>
+                        <th>Amount</th>
+                        <th>Description</th>
+                        <th>Status</th>
+                        <th>Date</th>
+                    </tr>
+                </thead>
+                <tbody id="financialLogsTable"></tbody>
+            </table>
+        </div>
+
+        <div class="section">
+            <div class="section-header">
+                <h2 class="section-title">Recent Complaints</h2>
+            </div>
+            <table class="table">
+                <thead>
+                    <tr>
+                        <th>Complaint ID</th>
+                        <th>Title</th>
+                        <th>Status</th>
+                        <th>Citizen ID</th>
+                        <th>Date</th>
+                    </tr>
+                </thead>
+                <tbody id="complaintLogsTable"></tbody>
+            </table>
+        </div>
+
+        <div class="section">
+            <div class="section-header">
+                <h2 class="section-title">Recent Project Updates</h2>
+            </div>
+            <table class="table">
+                <thead>
+                    <tr>
+                        <th>Project ID</th>
+                        <th>Title</th>
+                        <th>Progress</th>
+                        <th>Status</th>
+                        <th>Updated By</th>
+                        <th>Date</th>
+                    </tr>
+                </thead>
+                <tbody id="projectLogsTable"></tbody>
+            </table>
+        </div>
+
+        <div class="section">
+            <div class="section-header">
+                <h2 class="section-title">User Management</h2>
+            </div>
+            <table class="table">
+                <thead>
+                    <tr>
+                        <th>ID</th>
+                        <th>Name</th>
+                        <th>Email</th>
+                        <th>Role</th>
+                        <th>Location</th>
+                        <th>Actions</th>
+                    </tr>
+                </thead>
+                <tbody id="usersTable"></tbody>
+            </table>
+        </div>
+
+        <div class="section">
+            <div class="section-header">
+                <h2 class="section-title">Financial History</h2>
+            </div>
+            <div class="chart-container">
+                <canvas id="fundsChart"></canvas>
+            </div>
+        </div>
+
+        <div class="section">
+            <div class="section-header">
+                <h2 class="section-title">Role Distribution</h2>
+            </div>
+            <div class="chart-container">
+                <canvas id="rolesChart"></canvas>
+            </div>
+        </div>
+    </div>
+
+    <div class="modal" id="editModal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h3 id="modalTitle">Edit User</h3>
+                <span class="modal-close" onclick="closeEditModal()">&times;</span>
+            </div>
+            <form id="editUserForm">
+                <div class="form-group">
+                    <label for="editRole">Role</label>
+                    <select id="editRole">
+                        <option value="resident">Resident</option>
+                        <option value="project_officer">Project Officer</option>
+                        <option value="finance_officer">Finance Officer</option>
+                        <option value="barangay_leader">Barangay Leader</option>
+                    </select>
+                </div>
+                <div class="form-group">
+                    <label for="editLocation">Location (Lat, Lng)</label>
+                    <input type="text" id="editLocation" placeholder="14.5995, 120.9842">
+                </div>
+                <button type="submit" class="btn btn-primary">Save Changes</button>
+            </form>
+        </div>
+    </div>
+
+    <script>
+        let citizenId, userData;
+        const API_BASE = 'http://localhost:3000/api';
+
+        // Check storage (local or session)
+        const lsCitizenId = localStorage.getItem('citizenId');
+        const ssCitizenId = sessionStorage.getItem('citizenId');
+        const lsRole = localStorage.getItem('role');
+        const ssRole = sessionStorage.getItem('role');
+
+        citizenId = lsCitizenId || ssCitizenId;
+        const role = lsRole || ssRole;
+
+        if (!citizenId || role !== 'admin') {
+            localStorage.clear();
+            sessionStorage.clear();
+            window.location.href = '/';
+        }
+
+        async function init() {
+            await loadProfile();
+            await loadAnalytics();
+            await loadHistoryLogs();
+            await loadFinancialLogs();
+            await loadComplaintLogs();
+            await loadProjectLogs();
+            await loadUsers();
+            await loadCharts();
+        }
+
+        async function loadProfile() {
+            try {
+                const response = await fetch(`${API_BASE}/user/${citizenId}`);
+                const data = await response.json();
+                if (response.ok) {
+                    userData = data;
+                    document.getElementById('adminUser').textContent = `${userData.name} (${userData.citizenId})`;
+                } else {
+                    console.error('Profile fetch failed:', data.error);
+                    document.getElementById('adminUser').textContent = 'Admin (Profile Unavailable)';
+                }
+            } catch (error) {
+                console.error('Profile error:', error);
+            }
+        }
+
+        async function loadAnalytics() {
+            try {
+                const response = await fetch(`${API_BASE}/analytics/dashboard/${citizenId}`);
+                const stats = await response.json();
+                
+                const statsGrid = document.getElementById('statsGrid');
+                let html = `
+                    <div class="stat-card">
+                        <div class="stat-label">Total Users</div>
+                        <div class="stat-value">${stats.totalUsers || 0}</div>
+                        <div class="stat-subtitle">Active accounts</div>
+                    </div>
+                    <div class="stat-card">
+                        <div class="stat-label">Residents</div>
+                        <div class="stat-value">${stats.totalResidents || 0}</div>
+                        <div class="stat-subtitle">Community members</div>
+                    </div>
+                    <div class="stat-card">
+                        <div class="stat-label">Officials</div>
+                        <div class="stat-value">${stats.totalOfficials || 0}</div>
+                        <div class="stat-subtitle">Barangay staff</div>
+                    </div>
+                    <div class="stat-card">
+                        <div class="stat-label">Total Projects</div>
+                        <div class="stat-value">${stats.totalProjects || 0}</div>
+                        <div class="stat-subtitle">All time</div>
+                    </div>
+                `;
+                statsGrid.innerHTML = html;
+            } catch (error) {
+                console.error('Analytics error:', error);
+            }
+        }
+
+        async function loadHistoryLogs() {
+            try {
+                // Simulate system logs by combining recent activities from complaints, funds, projects
+                const [complaintsRes, fundsRes, projectsRes] = await Promise.all([
+                    fetch(`${API_BASE}/complaints?limit=5`),
+                    fetch(`${API_BASE}/funds?limit=5`),
+                    fetch(`${API_BASE}/projects?limit=5`)
+                ]);
+                const [complaints, funds, projects] = await Promise.all([
+                    complaintsRes.json(),
+                    fundsRes.json(),
+                    projectsRes.json()
+                ]);
+
+                const allLogs = [
+                    ...complaints.map(c => ({ type: 'Complaint Created', details: `${c.title} by ${c.citizenId}`, timestamp: c.createdAt })),
+                    ...funds.map(f => ({ type: 'Fund Transaction', details: `${f.type} - ${f.description}`, timestamp: f.transactionDate })),
+                    ...projects.map(p => ({ type: 'Project Updated', details: `${p.title} - ${p.progress}%`, timestamp: p.updatedAt || p.createdAt }))
+                ].sort((a, b) => new Date(b.timestamp) - new Date(a.timestamp));
+
+                const logsDiv = document.getElementById('historyLogs');
+                logsDiv.innerHTML = allLogs.map(log => `
+                    <div class="log-entry">
+                        <div class="log-details">
+                            <strong>${log.type}</strong>: ${log.details}
+                        </div>
+                        <div class="log-time">${new Date(log.timestamp).toLocaleString()}</div>
+                    </div>
+                `).join('');
+            } catch (error) {
+                console.error('History logs error:', error);
+                document.getElementById('historyLogs').innerHTML = '<p>Unable to load history logs.</p>';
+            }
+        }
+
+        async function loadFinancialLogs() {
+            try {
+                const response = await fetch(`${API_BASE}/funds?limit=10&sort=transactionDate:desc`);
+                const funds = await response.json();
+                const tbody = document.getElementById('financialLogsTable');
+                tbody.innerHTML = funds.map(f => `
+                    <tr>
+                        <td>${f.transactionId}</td>
+                        <td>${f.type} - ${f.subType}</td>
+                        <td>₱${f.amount.toLocaleString()}</td>
+                        <td>${f.description}</td>
+                        <td><span class="status-badge status-${f.approvalStatus}">${f.approvalStatus}</span></td>
+                        <td>${new Date(f.transactionDate).toLocaleDateString()}</td>
+                    </tr>
+                `).join('');
+            } catch (error) {
+                console.error('Financial logs error:', error);
+            }
+        }
+
+        async function loadComplaintLogs() {
+            try {
+                const response = await fetch(`${API_BASE}/complaints?limit=10&sort=createdAt:desc`);
+                const complaints = await response.json();
+                const tbody = document.getElementById('complaintLogsTable');
+                tbody.innerHTML = complaints.map(c => `
+                    <tr>
+                        <td>${c.complaintId}</td>
+                        <td>${c.title}</td>
+                        <td><span class="status-badge status-${c.status}">${c.status}</span></td>
+                        <td>${c.citizenId}</td>
+                        <td>${new Date(c.createdAt).toLocaleDateString()}</td>
+                    </tr>
+                `).join('');
+            } catch (error) {
+                console.error('Complaint logs error:', error);
+            }
+        }
+
+        async function loadProjectLogs() {
+            try {
+                const response = await fetch(`${API_BASE}/projects?limit=10&sort=updatedAt:desc`);
+                const projects = await response.json();
+                const tbody = document.getElementById('projectLogsTable');
+                tbody.innerHTML = projects.map(p => `
+                    <tr>
+                        <td>${p.projectId}</td>
+                        <td>${p.title}</td>
+                        <td>${p.progress}%</td>
+                        <td><span class="status-badge status-${p.status}">${p.status}</span></td>
+                        <td>${p.createdBy}</td>
+                        <td>${new Date(p.updatedAt || p.createdAt).toLocaleDateString()}</td>
+                    </tr>
+                `).join('');
+            } catch (error) {
+                console.error('Project logs error:', error);
+            }
+        }
+
+        async function loadUsers() {
+            try {
+                const response = await fetch(`${API_BASE}/users`, {
+                    headers: { 'x-citizen-id': citizenId }
+                });
+                const users = await response.json();
+                const tbody = document.getElementById('usersTable');
+                tbody.innerHTML = users.map(u => `
+                    <tr>
+                        <td>${u.citizenId}</td>
+                        <td>${u.name}</td>
+                        <td>${u.email}</td>
+                        <td>${u.role.replace('_', ' ')}</td>
+                        <td>${u.location || 'N/A'}</td>
+                        <td><button class="btn btn-edit" onclick="editUser('${u.citizenId}', '${u.role}', '${u.location || ''}')">Edit</button></td>
+                    </tr>
+                `).join('');
+            } catch (error) {
+                console.error('Users error:', error);
+            }
+        }
+
+        let currentEditingUserId;
+        function editUser(id, role, location) {
+            currentEditingUserId = id;
+            document.getElementById('editRole').value = role;
+            document.getElementById('editLocation').value = location;
+            document.getElementById('modalTitle').textContent = `Edit User: ${id}`;
+            document.getElementById('editModal').classList.add('show');
+        }
+
+        document.getElementById('editUserForm').addEventListener('submit', async (e) => {
+            e.preventDefault();
+            const newRole = document.getElementById('editRole').value;
+            const newLocation = document.getElementById('editLocation').value;
+            
+            try {
+                const response = await fetch(`${API_BASE}/users/${currentEditingUserId}`, {
+                    method: 'PUT',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'x-citizen-id': citizenId
+                    },
+                    body: JSON.stringify({ role: newRole, location: newLocation })
+                });
+                
+                if (response.ok) {
+                    alert('User updated successfully!');
+                    closeEditModal();
+                    loadUsers();
+                    loadAnalytics();
+                } else {
+                    alert('Update failed.');
+                }
+            } catch (error) {
+                console.error('Update error:', error);
+                alert('Update failed.');
+            }
+        });
+
+        function closeEditModal() {
+            document.getElementById('editModal').classList.remove('show');
+        }
+
+        async function loadCharts() {
+            try {
+                // Financial History Chart
+                const fundsResponse = await fetch(`${API_BASE}/funds/summary/all`);
+                const fundsData = await fundsResponse.json();
+                const ctx1 = document.getElementById('fundsChart').getContext('2d');
+                new Chart(ctx1, {
+                    type: 'line',
+                    data: {
+                        labels: fundsData.map(d => d._id.toString()),
+                        datasets: [
+                            {
+                                label: 'Income',
+                                data: fundsData.map(d => d.income),
+                                borderColor: '#3c3',
+                                backgroundColor: 'rgba(60, 195, 60, 0.1)',
+                                tension: 0.1
+                            },
+                            {
+                                label: 'Expenses',
+                                data: fundsData.map(d => d.expenses),
+                                borderColor: '#c33',
+                                backgroundColor: 'rgba(204, 51, 51, 0.1)',
+                                tension: 0.1
+                            }
+                        ]
+                    },
+                    options: {
+                        responsive: true,
+                        maintainAspectRatio: false,
+                        plugins: {
+                            legend: { position: 'top' }
+                        },
+                        scales: {
+                            y: {
+                                beginAtZero: true,
+                                ticks: {
+                                    callback: (value) => '₱' + value.toLocaleString()
+                                }
+                            }
+                        }
+                    }
+                });
+
+                // Role Distribution Pie Chart
+                const usersResponse = await fetch(`${API_BASE}/users`, { headers: { 'x-citizen-id': citizenId } });
+                const users = await usersResponse.json();
+                const roleCounts = {};
+                users.forEach(u => {
+                    roleCounts[u.role] = (roleCounts[u.role] || 0) + 1;
+                });
+                const ctx2 = document.getElementById('rolesChart').getContext('2d');
+                new Chart(ctx2, {
+                    type: 'pie',
+                    data: {
+                        labels: Object.keys(roleCounts).map(r => r.replace('_', ' ')),
+                        datasets: [{
+                            data: Object.values(roleCounts),
+                            backgroundColor: ['#0A400C', '#819067', '#B1AB86', '#FEFAE0', '#c33']
+                        }]
+                    },
+                    options: {
+                        responsive: true,
+                        maintainAspectRatio: false,
+                        plugins: {
+                            legend: { position: 'right' }
+                        }
+                    }
+                });
+            } catch (error) {
+                console.error('Charts error:', error);
+            }
+        }
+
+        function logout() {
+            if (confirm('Are you sure you want to logout?')) {
+                localStorage.clear();
+                sessionStorage.clear();
+                window.location.href = '/';
+            }
+        }
+
+        // Initialize on load
+        init();
+    </script>
+</body>
+</html>
